@@ -27,6 +27,10 @@ from pyspark.sql.functions import (
     unix_timestamp,
 )
 
+# Import utility functions for S3 path handling
+from utils.read_csv_file import df
+from utils.s3_path_utils import get_data_file_paths, get_output_paths
+
 
 def create_spark_session() -> SparkSession:
     """
@@ -54,26 +58,17 @@ def load_data(spark: SparkSession, s3_bucket: str, raw_data_prefix: str) -> tupl
     Returns:
         tuple: (transactions_df, vehicles_df, locations_df)
     """
+    # Get the data file paths using the utility function
+    data_paths = get_data_file_paths(s3_bucket, raw_data_prefix)
+
     # Load rental transactions data
-    transactions_df = (
-        spark.read.option("header", "true")
-        .option("inferSchema", "true")
-        .csv(f"s3://{s3_bucket}/{raw_data_prefix}rental_transactions/")
-    )
+    transactions_df = df(data_paths["rental_transactions"], spark)
 
     # Load vehicles data
-    vehicles_df = (
-        spark.read.option("header", "true")
-        .option("inferSchema", "true")
-        .csv(f"s3://{s3_bucket}/{raw_data_prefix}vehicles/")
-    )
+    vehicles_df = df(data_paths["vehicles"], spark)
 
     # Load locations data
-    locations_df = (
-        spark.read.option("header", "true")
-        .option("inferSchema", "true")
-        .csv(f"s3://{s3_bucket}/{raw_data_prefix}locations/")
-    )
+    locations_df = df(data_paths["locations"], spark)
 
     return transactions_df, vehicles_df, locations_df
 
@@ -239,18 +234,17 @@ def main():
             transactions_df, vehicles_df
         )
 
+        # Get output paths using the utility function
+        output_paths = get_output_paths(s3_bucket, processed_data_prefix)
+
         # Write the results to S3 in Parquet format
         location_metrics.write.mode("overwrite").parquet(
-            f"s3://{s3_bucket}/{processed_data_prefix}vehicle_location_metrics/location_metrics/"
+            output_paths["location_metrics"]
         )
-
         vehicle_type_metrics.write.mode("overwrite").parquet(
-            f"s3://{s3_bucket}/{processed_data_prefix}vehicle_location_metrics/vehicle_type_metrics/"
+            output_paths["vehicle_type_metrics"]
         )
-
-        brand_metrics.write.mode("overwrite").parquet(
-            f"s3://{s3_bucket}/{processed_data_prefix}vehicle_location_metrics/brand_metrics/"
-        )
+        brand_metrics.write.mode("overwrite").parquet(output_paths["brand_metrics"])
 
         print("Vehicle and location performance metrics job completed successfully")
 
