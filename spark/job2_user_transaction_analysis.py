@@ -22,11 +22,13 @@ from pyspark.sql.functions import (
     max,
     min,
     countDistinct,
-    hour,
     when,
     round,
     date_format,
     to_date,
+    unix_timestamp,
+    dayofweek,
+    first,
 )
 from pyspark.sql.window import Window
 import pyspark.sql.functions as F
@@ -94,7 +96,9 @@ def analyze_daily_transactions(transactions_df: DataFrame) -> DataFrame:
         .agg(
             count("rental_id").alias("total_transactions"),
             sum("total_amount").alias("total_revenue"),
-            avg("total_amount").alias("avg_transaction_amount"),
+            round(avg("total_amount"), 2).alias(
+                "avg_transaction_amount"
+            ),  # Round to 2 decimal places
             max("total_amount").alias("max_transaction_amount"),
             min("total_amount").alias("min_transaction_amount"),
             countDistinct("user_id").alias("unique_users"),
@@ -123,10 +127,11 @@ def analyze_user_transactions(
     transactions_with_duration = transactions_df.withColumn(
         "rental_duration_hours",
         round(
-            hour(
-                col("rental_end_time").cast("timestamp")
-                - col("rental_start_time").cast("timestamp")
-            ),
+            (
+                unix_timestamp(col("rental_end_time"))
+                - unix_timestamp(col("rental_start_time"))
+            )
+            / 3600,
             2,
         ),
     )
@@ -135,10 +140,14 @@ def analyze_user_transactions(
     user_metrics = transactions_with_duration.groupBy("user_id").agg(
         count("rental_id").alias("total_rentals"),
         sum("total_amount").alias("total_spent"),
-        avg("total_amount").alias("avg_rental_amount"),
+        round(avg("total_amount"), 2).alias(
+            "avg_rental_amount"
+        ),  # Round to 2 decimal places
         max("total_amount").alias("max_rental_amount"),
         min("total_amount").alias("min_rental_amount"),
-        avg("rental_duration_hours").alias("avg_rental_duration_hours"),
+        round(avg("rental_duration_hours"), 2).alias(
+            "avg_rental_duration_hours"
+        ),  # Round to 2 decimal places
         sum("rental_duration_hours").alias("total_rental_hours"),
         countDistinct("vehicle_id").alias("unique_vehicles_rented"),
     )
@@ -153,7 +162,7 @@ def analyze_user_transactions(
     # Calculate user spending percentile
     window_spec = Window.orderBy(col("total_spent"))
     user_metrics_with_percentile = user_metrics_with_info.withColumn(
-        "spending_percentile", F.percent_rank().over(window_spec) * 100
+        "spending_percentile", round(F.percent_rank().over(window_spec) * 100, 2)
     )
 
     # Categorize users by spending
@@ -190,25 +199,49 @@ def analyze_transaction_patterns(transactions_df: DataFrame) -> tuple:
         .agg(
             count("rental_id").alias("total_transactions"),
             sum("total_amount").alias("total_revenue"),
-            avg("total_amount").alias("avg_transaction_amount"),
+            round(avg("total_amount"), 2).alias(
+                "avg_transaction_amount"
+            ),  # Round to 2 decimal places
         )
         .orderBy("hour_of_day")
     )
 
-    # Extract day of week from rental_start_time (1 = Sunday, 7 = Saturday)
+    # Extract day of week  from rental_start_time
+
+    # Add day_of_week and adjust day_order for Monday (1) to Sunday (7)
     transactions_with_day = transactions_df.withColumn(
-        "day_of_week", date_format(col("rental_start_time"), "u").cast("int")
+        "day_of_week",
+        date_format(
+            col("rental_start_time"), "EEEE"
+        ),  # Extract day of the week (e.g., Monday)
+    ).withColumn(
+        "day_order",
+        (dayofweek(col("rental_start_time")) + 5) % 7
+        + 1,  # Add day order (Monday=1, Tuesday=2, ..., Sunday=7)
     )
 
-    # Calculate metrics by day of week
+    # Calculate metrics by day of week and sort by day_order
     day_of_week_metrics = (
-        transactions_with_day.groupBy("day_of_week")
+        transactions_with_day.groupBy("day_of_week")  # Group data by day of the week
         .agg(
-            count("rental_id").alias("total_transactions"),
-            sum("total_amount").alias("total_revenue"),
-            avg("total_amount").alias("avg_transaction_amount"),
+            count("rental_id").alias(
+                "total_transactions"
+            ),  # Calculate total transactions per day
+            sum("total_amount").alias(
+                "total_revenue"
+            ),  # Calculate total revenue per day
+            round(avg("total_amount"), 2).alias(
+                "avg_transaction_amount"
+            ),  # Calculate average transaction amount per day
+            first("day_order").alias("day_order"),  # Include day order for sorting
         )
-        .orderBy("day_of_week")
+        .orderBy("day_order")  # Sort by day order (Monday to Sunday)
+        .select(
+            "day_of_week",
+            "total_transactions",
+            "total_revenue",
+            "avg_transaction_amount",
+        )  # Select desired columns for output
     )
 
     return hourly_metrics, day_of_week_metrics
