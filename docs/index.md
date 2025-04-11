@@ -53,6 +53,8 @@ The project processes four datasets from a car rental marketplace:
 - **Locations Dataset**: Contains master data for rental locations
 - **Rental Transactions Dataset**: Contains records of vehicle rentals
 
+For detailed information about these datasets, including sample data and complete schema, refer to the [Dataset Reference](../data/dataset_reference.md) file.
+
 The data processing extracts key business metrics such as:
 
 - Revenue per location
@@ -67,41 +69,16 @@ The data processing extracts key business metrics such as:
 
 The project follows a modern data lake architecture:
 
-```markdown
-                                 ┌─────────────┐
-                                 │             │
-                                 │    AWS      │
-                                 │    EMR      │
-                                 │             │
-                                 └──────┬──────┘
-                                        │
-                                        │ Process Data
-                                        │
-┌─────────────┐    Store Raw Data    ┌──▼──────────┐    Catalog Data    ┌─────────────┐
-│             │                      │             │                     │             │
-│    Data     ├────────────────────►│    AWS      ├────────────────────►│    AWS      │
-│   Sources   │                      │     S3      │                     │    Glue     │
-│             │                      │             │                     │             │
-└─────────────┘                      └──────┬──────┘                     └──────┬──────┘
-                                            │                                   │
-                                            │ Query Data                        │ Create Tables
-                                            │                                   │
-                                     ┌──────▼──────┐                     ┌──────▼──────┐
-                                     │             │                     │             │
-                                     │    AWS      │◄────────────────────┤    AWS      │
-                                     │   Athena    │                     │    Step     │
-                                     │             │                     │  Functions  │
-                                     └─────────────┘                     └─────────────┘
-                                                                                │
-                                                                                │ Orchestrate
-                                                                                │
-                                                                         ┌──────▼──────┐
-                                                                         │             │
-                                                                         │  Business   │
-                                                                         │  Insights   │
-                                                                         │             │
-                                                                         └─────────────┘
-```
+![Architecture Diagram](images/architecture_diagram.png)
+
+The architecture diagram illustrates the flow of data through the system:
+
+1. Raw data is stored in Amazon S3
+2. Data is processed using Apache Spark on Amazon EMR
+3. Processed data is cataloged using AWS Glue
+4. Data is queried using Amazon Athena
+5. The entire workflow is orchestrated using AWS Step Functions
+6. Business insights are derived from the processed data
 
 The architecture follows these key principles:
 
@@ -143,10 +120,10 @@ The architecture follows these key principles:
      AWS_ACCESS_KEY_ID=your_access_key_here
      AWS_SECRET_ACCESS_KEY=your_secret_key_here
      AWS_REGION=us-east-1
-     
+
      # S3 Configuration
      S3_BUCKET_NAME=your-bucket-name
-     
+
      # Other configuration...
      ```
 

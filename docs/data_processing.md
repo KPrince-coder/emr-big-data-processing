@@ -31,7 +31,7 @@ The jobs read data from Amazon S3, process it using Spark transformations, and w
 
 ## Datasets
 
-The project uses four datasets:
+The project uses four datasets. For detailed information about these datasets, including sample data and complete schema, refer to the [Dataset Reference](../data/dataset_reference.md) file.
 
 ### Vehicles Dataset
 
@@ -187,11 +187,11 @@ The job is implemented in `spark/job1_vehicle_location_metrics.py` and consists 
 def calculate_location_metrics(transactions_df, locations_df):
     """
     Calculate metrics by location.
-    
+
     Args:
         transactions_df (DataFrame): The rental transactions DataFrame
         locations_df (DataFrame): The locations DataFrame
-        
+
     Returns:
         DataFrame: Location metrics DataFrame
     """
@@ -207,7 +207,7 @@ def calculate_location_metrics(transactions_df, locations_df):
             countDistinct("vehicle_id").alias("unique_vehicles_picked_up")
         )
         .withColumnRenamed("pickup_location", "location_id"))
-    
+
     # Calculate metrics by dropoff location
     dropoff_metrics = (transactions_df
         .groupBy("dropoff_location")
@@ -217,7 +217,7 @@ def calculate_location_metrics(transactions_df, locations_df):
             countDistinct("vehicle_id").alias("unique_vehicles_dropped_off")
         )
         .withColumnRenamed("dropoff_location", "location_id"))
-    
+
     # Join pickup and dropoff metrics
     location_metrics = (pickup_metrics
         .join(dropoff_metrics, "location_id", "outer")
@@ -237,7 +237,7 @@ def calculate_location_metrics(transactions_df, locations_df):
             col("unique_vehicles_dropped_off").alias("unique_vehicles_dropped_off"),
             (col("unique_vehicles_picked_up") + col("unique_vehicles_dropped_off")).alias("total_unique_vehicles")
         ))
-    
+
     return location_metrics
 ```
 
@@ -290,21 +290,21 @@ The job is implemented in `spark/job2_user_transaction_analysis.py` and consists
 def analyze_user_transactions(transactions_df, users_df):
     """
     Analyze transactions by user.
-    
+
     Args:
         transactions_df (DataFrame): The rental transactions DataFrame
         users_df (DataFrame): The users DataFrame
-        
+
     Returns:
         DataFrame: User transaction metrics DataFrame
     """
     # Add rental duration in hours
     transactions_with_duration = transactions_df.withColumn(
         "rental_duration_hours",
-        round(hour(col("rental_end_time").cast("timestamp") - 
+        round(hour(col("rental_end_time").cast("timestamp") -
                   col("rental_start_time").cast("timestamp")), 2)
     )
-    
+
     # Calculate metrics by user
     user_metrics = (transactions_with_duration
         .groupBy("user_id")
@@ -318,21 +318,21 @@ def analyze_user_transactions(transactions_df, users_df):
             sum("rental_duration_hours").alias("total_rental_hours"),
             countDistinct("vehicle_id").alias("unique_vehicles_rented")
         ))
-    
+
     # Join with users data
     user_metrics_with_info = user_metrics.join(
         users_df.select("user_id", "first_name", "last_name", "email", "is_active"),
         "user_id",
         "inner"
     )
-    
+
     # Calculate user spending percentile
     window_spec = Window.orderBy(col("total_spent"))
     user_metrics_with_percentile = user_metrics_with_info.withColumn(
-        "spending_percentile", 
+        "spending_percentile",
         F.percent_rank().over(window_spec) * 100
     )
-    
+
     # Categorize users by spending
     user_metrics_categorized = user_metrics_with_percentile.withColumn(
         "spending_category",
@@ -342,7 +342,7 @@ def analyze_user_transactions(transactions_df, users_df):
         .when(col("spending_percentile") >= 25, "Low Spender")
         .otherwise("Occasional Spender")
     )
-    
+
     return user_metrics_categorized
 ```
 

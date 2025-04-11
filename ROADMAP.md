@@ -1,5 +1,13 @@
 # Big Data Processing with EMR - Project Roadmap
 
+## Project Overview Mindmap
+
+The following mindmap provides a visual overview of the project components and their relationships:
+
+![Project Mindmap](docs/images/project_mindmap.png)
+
+This mindmap illustrates the key components of the project, including data sources, processing steps, AWS services, and business insights.
+
 ## Technical Terms Explained
 
 ### AWS EMR (Elastic MapReduce)

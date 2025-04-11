@@ -63,6 +63,15 @@ To get started with the project, follow these steps:
 5. Discover how to analyze and visualize the data in [Analysis and Visualization](analysis_visualization.md)
 6. Refer to the [Troubleshooting](troubleshooting.md) guide if you encounter any issues
 
+## Project Visuals
+
+- [Architecture Diagram](images/architecture_diagram.png) - Visual representation of the project architecture
+- [Project Mindmap](images/project_mindmap.png) - Overview of project components and their relationships
+
+## Dataset Reference
+
+- [Dataset Reference](../data/dataset_reference.md) - Detailed information about the datasets used in the project, including schema and sample data
+
 ## Additional Resources
 
 - [AWS EMR Documentation](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-what-is-emr.html)
