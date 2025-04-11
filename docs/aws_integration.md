@@ -71,11 +71,39 @@ s3://bucket-name/
 ```
 
 **Implementation:**
-The S3 integration is implemented in `scripts/setup_aws_environment.py` and includes functions for:
+The S3 integration is implemented in several scripts:
+
+1. `scripts/setup_aws_environment.py` - General AWS environment setup
+2. `scripts/setup_s3_bucket.py` - Dedicated script for S3 bucket setup and data loading
+
+These scripts include functions for:
 
 - Creating S3 buckets
+- Creating folder structure
 - Uploading data files
 - Uploading Spark scripts
+
+**S3 Bucket Setup Script:**
+
+The `setup_s3_bucket.py` script provides a convenient way to create an S3 bucket and load data into it. It can be executed directly or through wrapper scripts:
+
+```bash
+# Using the Python script directly
+python scripts/setup_s3_bucket.py --bucket-name your-bucket-name --region us-east-1
+
+# Using the Bash wrapper script
+bash scripts/setup_s3.sh --bucket-name your-bucket-name --region us-east-1
+
+# Using the PowerShell wrapper script (Windows)
+.\scripts\setup_s3.ps1 -BucketName your-bucket-name -Region us-east-1
+```
+
+The script performs the following actions:
+
+1. Creates the S3 bucket if it doesn't exist
+2. Creates the folder structure (raw, processed, temp, scripts, logs)
+3. Uploads data files from the data directory to the appropriate subfolders
+4. Uploads Spark scripts to the scripts folder
 
 **Code Example:**
 
@@ -83,20 +111,20 @@ The S3 integration is implemented in `scripts/setup_aws_environment.py` and incl
 def upload_file_to_s3(file_path, bucket_name, object_name=None):
     """
     Upload a file to an S3 bucket.
-    
+
     Args:
         file_path (str): Path to the file to upload
         bucket_name (str): Name of the bucket to upload to
         object_name (str): S3 object name. If not specified, file_path is used
-        
+
     Returns:
         bool: True if file was uploaded, False on error
     """
     if object_name is None:
         object_name = os.path.basename(file_path)
-        
+
     s3_client = boto3.client('s3', region_name=AWS_REGION)
-    
+
     try:
         s3_client.upload_file(file_path, bucket_name, object_name)
         logger.info(f"Uploaded '{file_path}' to '{bucket_name}/{object_name}'")
@@ -157,22 +185,22 @@ The EMR integration is implemented in `scripts/create_emr_cluster.py` and `scrip
 def create_emr_cluster():
     """
     Create an EMR cluster using the configuration defined in config/emr_config.json.
-    
+
     Returns:
         str: The cluster ID if successful, None otherwise
     """
     emr_client = boto3.client('emr', region_name=AWS_REGION)
-    
+
     # Load EMR configuration from JSON file
     config_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         'config',
         'emr_config.json'
     )
-    
+
     with open(config_path, 'r') as f:
         emr_config = json.load(f)
-    
+
     try:
         response = emr_client.run_job_flow(**emr_config)
         cluster_id = response['JobFlowId']
@@ -221,18 +249,18 @@ The Glue integration is implemented in `scripts/setup_glue_crawlers.py` and incl
 def create_glue_crawler(crawler_name, role, database_name, s3_target_path):
     """
     Create a Glue crawler if it doesn't exist.
-    
+
     Args:
         crawler_name (str): Name of the crawler to create
         role (str): IAM role ARN for the crawler
         database_name (str): Name of the database to use
         s3_target_path (str): S3 path to crawl
-        
+
     Returns:
         bool: True if crawler was created or already exists, False on error
     """
     glue_client = boto3.client('glue', region_name=AWS_REGION)
-    
+
     try:
         # Check if crawler already exists
         response = glue_client.get_crawler(Name=crawler_name)
@@ -288,18 +316,18 @@ The Athena integration is demonstrated in `notebooks/athena_queries.ipynb` and i
 def run_athena_query(query, database, s3_output):
     """
     Run a query on Athena and return the results as a pandas DataFrame.
-    
+
     Args:
         query (str): The SQL query to run
         database (str): The Athena database to query
         s3_output (str): The S3 location to store query results
-        
+
     Returns:
         DataFrame: The query results as a pandas DataFrame
     """
     athena_client = boto3.client('athena', region_name=AWS_REGION)
     s3_client = boto3.client('s3', region_name=AWS_REGION)
-    
+
     # Start the query execution
     response = athena_client.start_query_execution(
         QueryString=query,
@@ -310,39 +338,39 @@ def run_athena_query(query, database, s3_output):
             'OutputLocation': s3_output
         }
     )
-    
+
     query_execution_id = response['QueryExecutionId']
     print(f"Query execution ID: {query_execution_id}")
-    
+
     # Wait for the query to complete
     state = 'RUNNING'
     while state in ['RUNNING', 'QUEUED']:
         response = athena_client.get_query_execution(QueryExecutionId=query_execution_id)
         state = response['QueryExecution']['Status']['State']
-        
+
         if state in ['RUNNING', 'QUEUED']:
             print(f"Query is {state}. Waiting...")
             time.sleep(5)
-    
+
     # Check if the query succeeded
     if state == 'SUCCEEDED':
         print("Query succeeded!")
-        
+
         # Get the results
         result_file = f"{s3_output.rstrip('/')}/{query_execution_id}.csv"
         bucket_name = result_file.split('//')[1].split('/')[0]
         key = '/'.join(result_file.split('//')[1].split('/')[1:])
-        
+
         # Download the results
         local_file = 'athena_query_result.csv'
         s3_client.download_file(bucket_name, key, local_file)
-        
+
         # Load the results into a DataFrame
         df = pd.read_csv(local_file)
-        
+
         # Clean up the local file
         os.remove(local_file)
-        
+
         return df
     else:
         error_message = response['QueryExecution']['Status'].get('StateChangeReason', 'Unknown error')
@@ -354,44 +382,44 @@ def run_athena_query(query, database, s3_output):
 
 ```sql
 -- Highest Revenue-Generating Locations
-SELECT 
-    location_id, 
-    location_name, 
-    city, 
-    state, 
+SELECT
+    location_id,
+    location_name,
+    city,
+    state,
     total_revenue
-FROM 
+FROM
     location_metrics
-ORDER BY 
+ORDER BY
     total_revenue DESC
 LIMIT 10;
 
 -- Most Rented Vehicle Types
-SELECT 
-    vehicle_type, 
-    total_rentals, 
-    total_revenue, 
+SELECT
+    vehicle_type,
+    total_rentals,
+    total_revenue,
     avg_rental_amount,
     avg_rental_duration_hours
-FROM 
+FROM
     vehicle_type_metrics
-ORDER BY 
+ORDER BY
     total_rentals DESC;
 
 -- Top-Spending Users
-SELECT 
-    user_id, 
-    first_name, 
-    last_name, 
-    total_spent, 
-    total_rentals, 
+SELECT
+    user_id,
+    first_name,
+    last_name,
+    total_spent,
+    total_rentals,
     avg_rental_amount,
     spending_category
-FROM 
+FROM
     user_metrics
-WHERE 
+WHERE
     spending_category = 'Top Spender'
-ORDER BY 
+ORDER BY
     total_spent DESC
 LIMIT 20;
 ```
@@ -432,17 +460,17 @@ The workflow is defined in `step_functions/data_pipeline_workflow.json` and incl
 def create_or_update_state_machine(state_machine_name, role_arn, definition):
     """
     Create or update a Step Functions state machine.
-    
+
     Args:
         state_machine_name (str): Name of the state machine
         role_arn (str): IAM role ARN for the state machine
         definition (str): State machine definition JSON
-        
+
     Returns:
         str: The ARN of the state machine if successful, None otherwise
     """
     sfn_client = boto3.client('stepfunctions', region_name=AWS_REGION)
-    
+
     # Check if state machine already exists
     try:
         response = sfn_client.list_state_machines()
@@ -457,7 +485,7 @@ def create_or_update_state_machine(state_machine_name, role_arn, definition):
                 )
                 logger.info(f"State machine '{state_machine_name}' updated successfully")
                 return state_machine['stateMachineArn']
-        
+
         # Create new state machine
         logger.info(f"Creating new state machine '{state_machine_name}'")
         response = sfn_client.create_state_machine(
@@ -472,7 +500,7 @@ def create_or_update_state_machine(state_machine_name, role_arn, definition):
         )
         logger.info(f"State machine '{state_machine_name}' created successfully")
         return response['stateMachineArn']
-    
+
     except Exception as e:
         logger.error(f"Error creating/updating state machine '{state_machine_name}': {e}")
         return None
@@ -495,20 +523,20 @@ The Lambda function is implemented in `scripts/lambda_start_glue_crawlers.py` an
 def lambda_handler(event, context):
     """
     Lambda function handler to start Glue crawlers.
-    
+
     Args:
         event (dict): Event data from Step Functions
         context (object): Lambda context
-        
+
     Returns:
         dict: Result of the operation
     """
     logger.info("Starting Glue crawlers")
-    
+
     # Get parameters from the event
     database = event.get('database')
     crawlers = event.get('crawlers', [])
-    
+
     if not database or not crawlers:
         error_message = "Missing required parameters: database and/or crawlers"
         logger.error(error_message)
@@ -516,74 +544,74 @@ def lambda_handler(event, context):
             'statusCode': 400,
             'error': error_message
         }
-    
+
     glue_client = boto3.client('glue')
     results = {}
-    
+
     # Start each crawler
     for crawler_name in crawlers:
         try:
             # Check if crawler is already running
             response = glue_client.get_crawler(Name=crawler_name)
             crawler_state = response['Crawler']['State']
-            
+
             if crawler_state == 'RUNNING':
                 logger.info(f"Crawler '{crawler_name}' is already running")
                 results[crawler_name] = 'ALREADY_RUNNING'
                 continue
-            
+
             # Start the crawler
             glue_client.start_crawler(Name=crawler_name)
             logger.info(f"Started crawler '{crawler_name}'")
             results[crawler_name] = 'STARTED'
-            
+
         except glue_client.exceptions.EntityNotFoundException:
             error_message = f"Crawler '{crawler_name}' not found"
             logger.error(error_message)
             results[crawler_name] = 'NOT_FOUND'
-            
+
         except Exception as e:
             error_message = f"Error starting crawler '{crawler_name}': {str(e)}"
             logger.error(error_message)
             results[crawler_name] = 'ERROR'
-    
+
     # Wait for all crawlers to complete (with timeout)
     timeout_seconds = 900  # 15 minutes
     start_time = time.time()
     all_completed = False
-    
+
     while not all_completed and time.time() - start_time < timeout_seconds:
         all_completed = True
-        
+
         for crawler_name in crawlers:
             try:
                 response = glue_client.get_crawler(Name=crawler_name)
                 crawler_state = response['Crawler']['State']
-                
+
                 if crawler_state == 'RUNNING':
                     logger.info(f"Crawler '{crawler_name}' is still running")
                     all_completed = False
                     break
-                    
+
             except Exception as e:
                 logger.error(f"Error checking crawler '{crawler_name}' status: {str(e)}")
-        
+
         if not all_completed:
             time.sleep(30)  # Wait for 30 seconds before checking again
-    
+
     # Check final status of all crawlers
     for crawler_name in crawlers:
         try:
             response = glue_client.get_crawler(Name=crawler_name)
             last_crawl = response['Crawler'].get('LastCrawl', {})
             status = last_crawl.get('Status')
-            
+
             results[crawler_name] = f"COMPLETED: {status}"
             logger.info(f"Crawler '{crawler_name}' completed with status: {status}")
-            
+
         except Exception as e:
             logger.error(f"Error checking final status of crawler '{crawler_name}': {str(e)}")
-    
+
     return {
         'statusCode': 200,
         'database': database,

@@ -45,25 +45,45 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 ## Getting Started
 
 1. Clone this repository
+
 2. Install the required dependencies:
-   ```
+
+   ```bash
    pip install -r requirements.txt
    ```
+
 3. Configure the environment variables:
+
    - Copy the `.env.example` file to `.env`
    - Edit the `.env` file with your AWS credentials and configuration
-4. Run the data pipeline:
+4. Set up the S3 bucket and load data:
+
+   ```bash
+   # Using the Python script directly
+   python scripts/setup_s3_bucket.py --bucket-name your-bucket-name --region us-east-1
+
+   # Using the Bash wrapper script
+   bash scripts/setup_s3.sh --bucket-name your-bucket-name --region us-east-1
+
+   # Using the PowerShell wrapper script (Windows)
+   .\scripts\setup_s3.ps1 -BucketName your-bucket-name -Region us-east-1
    ```
+
+5. Run the data pipeline:
+
+   ```bash
    python main.py
    ```
 
    Or to only deploy the infrastructure without running jobs:
-   ```
+
+   ```bash
    python main.py --deploy-only
    ```
 
    Or to execute the Step Functions workflow:
-   ```
+
+   ```bash
    python main.py --run-workflow
    ```
 
