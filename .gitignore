@@ -8,3 +8,18 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+env/
+
+# Environment variables - never commit these!
+.env
+
+# AWS credentials
+.aws/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development files
+emr_cluster_id.txt
+*.log

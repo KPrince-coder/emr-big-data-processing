@@ -4,14 +4,16 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 
 ## Project Structure
 
-```
+```markdown
 .
 ├── README.md                 # Project documentation
 ├── CHANGELOG.md              # Track project progress
 ├── ROADMAP.md                # Project roadmap and technical explanations
 ├── config/                   # Configuration files
 │   ├── aws_config.py         # AWS configuration settings
+│   ├── env_loader.py         # Environment variable loader
 │   └── emr_config.json       # EMR cluster configuration
+├── .env                      # Environment variables (not in version control)
 ├── data/                     # Sample data (small versions for testing)
 │   ├── vehicles/
 │   ├── users/
@@ -43,8 +45,27 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 ## Getting Started
 
 1. Clone this repository
-2. Configure AWS credentials
-3. Follow the steps in the documentation to run the data pipeline
+2. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Configure the environment variables:
+   - Copy the `.env.example` file to `.env`
+   - Edit the `.env` file with your AWS credentials and configuration
+4. Run the data pipeline:
+   ```
+   python main.py
+   ```
+
+   Or to only deploy the infrastructure without running jobs:
+   ```
+   python main.py --deploy-only
+   ```
+
+   Or to execute the Step Functions workflow:
+   ```
+   python main.py --run-workflow
+   ```
 
 ## Documentation
 
