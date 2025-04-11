@@ -1,0 +1,135 @@
+{
+  "Comment": "Car Rental Data Processing Pipeline",
+  "StartAt": "Create EMR Cluster",
+  "States": {
+    "Create EMR Cluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+      "Parameters": {
+        "Name": "Car-Rental-EMR-Cluster",
+        "ReleaseLabel": "emr-6.10.0",
+        "Applications": [
+          {
+            "Name": "Spark"
+          },
+          {
+            "Name": "Hadoop"
+          },
+          {
+            "Name": "Hive"
+          },
+          {
+            "Name": "Livy"
+          }
+        ],
+        "ServiceRole": "EMR_DefaultRole",
+        "JobFlowRole": "EMR_EC2_DefaultRole",
+        "LogUri": "s3://car-rental-data-lake/logs/",
+        "Instances": {
+          "InstanceGroups": [
+            {
+              "Name": "Master Instance Group",
+              "Market": "ON_DEMAND",
+              "InstanceRole": "MASTER",
+              "InstanceType": "m5.xlarge",
+              "InstanceCount": 1
+            },
+            {
+              "Name": "Core Instance Group",
+              "Market": "ON_DEMAND",
+              "InstanceRole": "CORE",
+              "InstanceType": "m5.xlarge",
+              "InstanceCount": 2
+            }
+          ],
+          "KeepJobFlowAliveWhenNoSteps": true,
+          "TerminationProtected": false
+        },
+        "VisibleToAllUsers": true,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "CarRentalDataProcessing"
+          },
+          {
+            "Key": "Environment",
+            "Value": "Development"
+          }
+        ]
+      },
+      "ResultPath": "$.cluster",
+      "Next": "Run Vehicle Location Metrics Job"
+    },
+    "Run Vehicle Location Metrics Job": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.cluster.ClusterId",
+        "Step": {
+          "Name": "Vehicle Location Metrics Job",
+          "ActionOnFailure": "CONTINUE",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args": [
+              "spark-submit",
+              "--deploy-mode", "cluster",
+              "s3://car-rental-data-lake/scripts/job1_vehicle_location_metrics.py",
+              "car-rental-data-lake",
+              "prod"
+            ]
+          }
+        }
+      },
+      "ResultPath": "$.vehicleLocationMetricsJob",
+      "Next": "Run User Transaction Analysis Job"
+    },
+    "Run User Transaction Analysis Job": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.cluster.ClusterId",
+        "Step": {
+          "Name": "User Transaction Analysis Job",
+          "ActionOnFailure": "CONTINUE",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args": [
+              "spark-submit",
+              "--deploy-mode", "cluster",
+              "s3://car-rental-data-lake/scripts/job2_user_transaction_analysis.py",
+              "car-rental-data-lake",
+              "prod"
+            ]
+          }
+        }
+      },
+      "ResultPath": "$.userTransactionAnalysisJob",
+      "Next": "Start Glue Crawlers"
+    },
+    "Start Glue Crawlers": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "StartGlueCrawlers",
+        "Payload": {
+          "database": "car_rental_db",
+          "crawlers": [
+            "car-rental-crawler-vehicle_location_metrics",
+            "car-rental-crawler-user_transaction_analysis"
+          ]
+        }
+      },
+      "ResultPath": "$.glueCrawlers",
+      "Next": "Terminate EMR Cluster"
+    },
+    "Terminate EMR Cluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:terminateCluster.sync",
+      "Parameters": {
+        "ClusterId.$": "$.cluster.ClusterId"
+      },
+      "ResultPath": "$.terminateCluster",
+      "End": true
+    }
+  }
+}
