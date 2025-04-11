@@ -8,7 +8,7 @@ This document contains information about the datasets used in the Big Data Proce
 
 ### Schema
 
-```markdown
+```bash
 root
  |-- location_id: integer (nullable = true)
  |-- location_name: string (nullable = true)
@@ -22,7 +22,7 @@ root
 
 ### Sample Data
 
-```markdown
+```bash
 +-----------+--------------------+--------------------+---------+-----+--------+-----------+----------+
 |location_id|       location_name|             address|     city|state|zip_code|   latitude| longitude|
 +-----------+--------------------+--------------------+---------+-----+--------+-----------+----------+
@@ -40,7 +40,7 @@ root
 
 ### Schema
 
-```markdown
+```bash
 root
  |-- rental_id: string (nullable = true)
  |-- user_id: string (nullable = true)
@@ -54,7 +54,7 @@ root
 
 ### Sample Data
 
-```markdown
+```bash
 +----------+----------+----------+-------------------+-------------------+---------------+----------------+------------+
 | rental_id|   user_id|vehicle_id|  rental_start_time|    rental_end_time|pickup_location|dropoff_location|total_amount|
 +----------+----------+----------+-------------------+-------------------+---------------+----------------+------------+
@@ -72,7 +72,7 @@ root
 
 ### Schema
 
-```markdown
+```bash
 root
  |-- user_id: string (nullable = true)
  |-- first_name: string (nullable = true)
@@ -87,7 +87,7 @@ root
 
 ### Sample Data
 
-```markdown
+```bash
 +----------+----------+---------+--------------------+------------------+---------------------+---------------------+-------------+---------+
 |   user_id|first_name|last_name|               email|      phone_number|driver_license_number|driver_license_expiry|creation_date|is_active|
 +----------+----------+---------+--------------------+------------------+---------------------+---------------------+-------------+---------+
@@ -105,7 +105,7 @@ root
 
 ### Schema
 
-```markdown
+```bash
 root
  |-- active: integer (nullable = true)
  |-- vehicle_license_number: string (nullable = true)
@@ -125,7 +125,7 @@ root
 
 ### Sample Data
 
-```markdown
+```bash
 +------+----------------------+--------------------+----------------+---------------+---------------------+------------------+------------+---------------------+--------------------+----------+---------------------+---------+------------+
 |active|vehicle_license_number|   registration_name|    license_type|expiration_date|permit_license_number|certification_date|vehicle_year|base_telephone_number|        base_address|vehicle_id|last_update_timestamp|    brand|vehicle_type|
 +------+----------------------+--------------------+----------------+---------------+---------------------+------------------+------------+---------------------+--------------------+----------+---------------------+---------+------------+
