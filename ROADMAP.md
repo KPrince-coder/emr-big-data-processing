@@ -3,24 +3,31 @@
 ## Technical Terms Explained
 
 ### AWS EMR (Elastic MapReduce)
+
 EMR is a cloud-based big data platform that allows you to process vast amounts of data using popular frameworks like Apache Spark, Hadoop, and Presto. It automatically provisions and scales compute resources, making it easier to process large datasets without managing the underlying infrastructure.
 
 ### Apache Spark
+
 A unified analytics engine for big data processing with built-in modules for SQL, streaming, machine learning, and graph processing. We'll use PySpark (Python API for Spark) to write our data transformation jobs.
 
 ### Amazon S3 (Simple Storage Service)
+
 Object storage service that offers industry-leading scalability, data availability, security, and performance. We'll use S3 to store both our raw data and processed results.
 
 ### AWS Glue
+
 A serverless data integration service that makes it easy to discover, prepare, and combine data for analytics. Glue Crawlers automatically discover and catalog metadata from data sources, making the data available for querying.
 
 ### Amazon Athena
+
 An interactive query service that makes it easy to analyze data in Amazon S3 using standard SQL. It's serverless, so there's no infrastructure to manage, and you pay only for the queries you run.
 
 ### AWS Step Functions
+
 A serverless workflow orchestration service that lets you coordinate multiple AWS services into serverless workflows. We'll use it to automate our entire data pipeline.
 
 ### Parquet Format
+
 A columnar storage file format designed for efficient data storage and retrieval. It provides efficient data compression and encoding schemes with enhanced performance to handle complex data in bulk.
 
 ## Project Requirements
