@@ -97,7 +97,9 @@ def calculate_location_metrics(
         .agg(
             count("rental_id").alias("total_pickups"),
             sum("total_amount").alias("pickup_revenue"),
-            avg("total_amount").alias("avg_pickup_amount"),
+            round(avg("total_amount"), 2).alias(
+                "avg_pickup_amount"
+            ),  # Round to 2 decimal places
             max("total_amount").alias("max_pickup_amount"),
             min("total_amount").alias("min_pickup_amount"),
             countDistinct("vehicle_id").alias("unique_vehicles_picked_up"),
