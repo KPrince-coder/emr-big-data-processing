@@ -621,11 +621,39 @@ def lambda_handler(event, context):
 
 ## IAM Roles and Permissions
 
-The project requires several IAM roles with specific permissions:
+The project requires several IAM roles with specific permissions. We provide a script to automate the creation of these roles and their associated permissions.
 
-### EMR Service Role
+### IAM Setup Script
+
+The `scripts/setup_iam_roles.py` script creates all the necessary IAM roles and attaches the appropriate policies. It can be executed directly or through wrapper scripts:
+
+```bash
+# Using the Python script directly
+python scripts/setup_iam_roles.py --region us-east-1
+
+# Using the Bash wrapper script
+bash scripts/setup_iam_roles.sh --region us-east-1
+
+# Using the PowerShell wrapper script (Windows)
+.\scripts\setup_iam_roles.ps1 -Region us-east-1
+```
+
+The script performs the following actions:
+1. Creates IAM roles if they don't exist
+2. Attaches AWS managed policies to the roles
+3. Creates custom policies for specific permissions
+4. Sets up instance profiles for EC2 roles
+5. Saves the role ARNs to a file for reference
+
+### Required IAM Roles
+
+The project requires the following IAM roles:
+
+#### EMR Service Role
 
 This role allows EMR to access other AWS services on your behalf.
+
+**Role Name:** `EMR_DefaultRole`
 
 **Required Permissions:**
 
@@ -634,9 +662,11 @@ This role allows EMR to access other AWS services on your behalf.
 - `s3:PutObject`
 - `s3:ListBucket`
 
-### EMR EC2 Instance Profile
+#### EMR EC2 Instance Profile
 
 This role allows EC2 instances in the EMR cluster to access other AWS services.
+
+**Role Name:** `EMR_EC2_DefaultRole`
 
 **Required Permissions:**
 
@@ -646,9 +676,11 @@ This role allows EC2 instances in the EMR cluster to access other AWS services.
 - `cloudwatch:PutMetricData`
 - `dynamodb:*` (if using DynamoDB)
 
-### Glue Service Role
+#### Glue Service Role
 
 This role allows Glue to access S3 and other AWS services.
+
+**Role Name:** `AWSGlueServiceRole-CarRentalCrawler`
 
 **Required Permissions:**
 
@@ -657,9 +689,11 @@ This role allows Glue to access S3 and other AWS services.
 - `s3:PutObject`
 - `s3:ListBucket`
 
-### Step Functions Execution Role
+#### Step Functions Execution Role
 
 This role allows Step Functions to invoke other AWS services.
+
+**Role Name:** `StepFunctionsExecutionRole`
 
 **Required Permissions:**
 
@@ -667,6 +701,21 @@ This role allows Step Functions to invoke other AWS services.
 - `elasticmapreduce:*`
 - `states:*`
 - `events:*`
+
+#### Lambda Execution Role
+
+This role allows Lambda functions to execute and access other AWS services.
+
+**Role Name:** `LambdaGlueCrawlerRole`
+
+**Required Permissions:**
+
+- `logs:CreateLogGroup`
+- `logs:CreateLogStream`
+- `logs:PutLogEvents`
+- `glue:StartCrawler`
+- `glue:GetCrawler`
+- `glue:GetCrawlers`
 
 ## Environment Setup
 
@@ -708,6 +757,7 @@ The environment variables are loaded using the `python-dotenv` package and acces
 
 The project includes several scripts for deploying and managing the AWS resources:
 
+- `scripts/setup_iam_roles.py`: Sets up all required IAM roles and permissions
 - `scripts/setup_aws_environment.py`: Sets up the S3 bucket and uploads data
 - `scripts/create_emr_cluster.py`: Creates an EMR cluster
 - `scripts/run_spark_jobs.py`: Runs Spark jobs on EMR
