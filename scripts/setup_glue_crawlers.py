@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 AWS Glue Crawler Setup Script
 
@@ -6,22 +7,23 @@ This script sets up AWS Glue crawlers to catalog the processed data in S3.
 """
 
 import os
-import boto3
 import sys
 import time
+
+import boto3
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import project configuration
-from config.aws_config import GLUE_CONFIG, S3_CONFIG, AWS_REGION
+from config.aws_config import GLUE_CONFIG, AWS_REGION
 from utils.logging_config import configure_logger
 
 # Configure logger
 logger = configure_logger(__name__)
 
 
-def create_glue_database(database_name):
+def create_glue_database(database_name: str) -> bool:
     """
     Create a Glue database if it doesn't exist.
 
@@ -35,7 +37,7 @@ def create_glue_database(database_name):
 
     try:
         # Check if database already exists
-        response = glue_client.get_database(Name=database_name)
+        glue_client.get_database(Name=database_name)
         logger.info(f"Glue database '{database_name}' already exists")
         return True
     except glue_client.exceptions.EntityNotFoundException:
@@ -57,7 +59,9 @@ def create_glue_database(database_name):
         return False
 
 
-def create_glue_crawler(crawler_name, role, database_name, s3_target_path):
+def create_glue_crawler(
+    crawler_name: str, role: str, database_name: str, s3_target_path: str
+) -> bool:
     """
     Create a Glue crawler if it doesn't exist.
 
@@ -74,7 +78,7 @@ def create_glue_crawler(crawler_name, role, database_name, s3_target_path):
 
     try:
         # Check if crawler already exists
-        response = glue_client.get_crawler(Name=crawler_name)
+        glue_client.get_crawler(Name=crawler_name)
         logger.info(f"Glue crawler '{crawler_name}' already exists")
         return True
     except glue_client.exceptions.EntityNotFoundException:
@@ -102,7 +106,7 @@ def create_glue_crawler(crawler_name, role, database_name, s3_target_path):
         return False
 
 
-def start_crawler(crawler_name):
+def start_crawler(crawler_name: str) -> bool:
     """
     Start a Glue crawler.
 
@@ -132,7 +136,7 @@ def start_crawler(crawler_name):
         return False
 
 
-def wait_for_crawler_completion(crawler_name, timeout_seconds=300):
+def wait_for_crawler_completion(crawler_name: str, timeout_seconds=300) -> bool:
     """
     Wait for a Glue crawler to complete.
 
@@ -175,7 +179,7 @@ def wait_for_crawler_completion(crawler_name, timeout_seconds=300):
     return False
 
 
-def main():
+def main() -> None:
     """Main function to set up Glue crawlers."""
     logger.info("Starting Glue crawler setup")
 
