@@ -10,6 +10,8 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
+from utils.s3_path_utils import get_logs_path, get_processed_data_path
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -127,7 +129,7 @@ def get_emr_config() -> dict:
 
     return {
         "name": get_env_var("EMR_CLUSTER_NAME", default="Car-Rental-EMR-Cluster"),
-        "log_uri": f"s3://{get_aws_bucket()}/logs/",
+        "log_uri": get_logs_path(get_aws_bucket()),
         "release_label": get_env_var("EMR_RELEASE_LABEL", default="emr-6.10.0"),
         "applications": ["Spark", "Hadoop", "Hive", "Livy"],
         "master_instance_type": get_env_var(
@@ -175,11 +177,17 @@ def get_glue_config() -> dict:
         "tables": {
             "vehicle_location_metrics": {
                 "name": "vehicle_location_metrics",
-                "location": f"s3://{get_aws_bucket()}/processed/vehicle_location_metrics/",
+                # Use the utility function to get the correct path
+                "location": get_processed_data_path(
+                    "vehicle_location_metrics", get_aws_bucket()
+                ),
             },
             "user_transaction_analysis": {
                 "name": "user_transaction_analysis",
-                "location": f"s3://{get_aws_bucket()}/processed/user_transaction_analysis/",
+                # Use the utility function to get the correct path
+                "location": get_processed_data_path(
+                    "user_transaction_analysis", get_aws_bucket()
+                ),
             },
         },
     }
