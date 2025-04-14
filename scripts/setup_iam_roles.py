@@ -17,6 +17,8 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
+from config.env_loader import get_aws_region
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -171,6 +173,9 @@ IAM_ROLES = {
     },
 }
 
+# Get AWS region from environment or CLI configuration
+aws_region = get_aws_region()
+
 
 def create_trust_relationship_policy(service: str) -> dict:
     """
@@ -195,7 +200,7 @@ def create_trust_relationship_policy(service: str) -> dict:
 
 
 def create_iam_role(
-    role_name: str, description: str, trust_relationship: dict, region=None
+    role_name: str, description: str, trust_relationship: dict, region=aws_region
 ) -> str | None:
     """
     Create an IAM role if it doesn't exist.
@@ -240,7 +245,7 @@ def create_iam_role(
             return None
 
 
-def attach_managed_policy(role_name: str, policy_arn: str, region=None) -> bool:
+def attach_managed_policy(role_name: str, policy_arn: str, region=aws_region) -> bool:
     """
     Attach a managed policy to an IAM role.
 
@@ -276,7 +281,7 @@ def attach_managed_policy(role_name: str, policy_arn: str, region=None) -> bool:
 
 
 def create_custom_policy(
-    policy_name: str, description: str, policy_document: dict, region=None
+    policy_name: str, description: str, policy_document: dict, region=aws_region
 ) -> str | None:
     """
     Create a custom IAM policy if it doesn't exist.
@@ -315,7 +320,7 @@ def create_custom_policy(
 
 
 def create_instance_profile(
-    profile_name: str, role_name: str, region=None
+    profile_name: str, role_name: str, region=aws_region
 ) -> str | None:
     """
     Create an instance profile and add a role to it.
@@ -381,7 +386,7 @@ def create_instance_profile(
         return None
 
 
-def setup_iam_roles(region=None) -> dict:
+def setup_iam_roles(region=aws_region) -> dict:
     """
     Set up all IAM roles and permissions.
 
