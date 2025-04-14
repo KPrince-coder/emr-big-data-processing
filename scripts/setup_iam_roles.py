@@ -164,6 +164,31 @@ IAM_ROLES = {
                     ],
                 },
             },
+            {
+                "name": "StepFunctionsPassRole",
+                "description": "Policy for Step Functions to pass IAM roles to AWS services",
+                "policy_document": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "iam:PassRole",
+                            "Resource": [
+                                "arn:aws:iam::*:role/EMR*",
+                                "arn:aws:iam::*:role/AWSGlueServiceRole*",
+                            ],
+                            "Condition": {
+                                "StringLike": {
+                                    "iam:PassedToService": [
+                                        "elasticmapreduce.amazonaws.com*",
+                                        "glue.amazonaws.com*",
+                                    ]
+                                }
+                            },
+                        }
+                    ],
+                },
+            },
         ],
     },
     "lambda_execution_role": {
