@@ -129,7 +129,7 @@ def get_emr_config() -> dict:
 
     return {
         "name": get_env_var("EMR_CLUSTER_NAME", default="Car-Rental-EMR-Cluster"),
-        "log_uri": get_logs_path(get_aws_bucket()),
+        "log_uri": get_logs_path("emr", get_s3_config(), get_aws_bucket()),
         "release_label": get_env_var("EMR_RELEASE_LABEL", default="emr-6.10.0"),
         "applications": ["Spark", "Hadoop", "Hive", "Livy"],
         "master_instance_type": get_env_var(
@@ -179,14 +179,14 @@ def get_glue_config() -> dict:
                 "name": "vehicle_location_metrics",
                 # Use the utility function to get the correct path
                 "location": get_processed_data_path(
-                    "vehicle_location_metrics", get_aws_bucket()
+                    "vehicle_location_metrics", get_s3_config(), get_aws_bucket()
                 ),
             },
             "user_transaction_analysis": {
                 "name": "user_transaction_analysis",
                 # Use the utility function to get the correct path
                 "location": get_processed_data_path(
-                    "user_transaction_analysis", get_aws_bucket()
+                    "user_transaction_analysis", get_s3_config(), get_aws_bucket()
                 ),
             },
         },
