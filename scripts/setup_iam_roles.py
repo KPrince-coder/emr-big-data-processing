@@ -18,7 +18,7 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
-from config.env_loader import get_aws_region
+from config.aws_config import AWS_REGION
 from utils.logging_config import configure_logger
 
 # Configure logger
@@ -172,9 +172,6 @@ IAM_ROLES = {
     },
 }
 
-# Get AWS region from environment or CLI configuration
-aws_region = get_aws_region()
-
 
 def create_trust_relationship_policy(service: str) -> dict:
     """
@@ -199,7 +196,7 @@ def create_trust_relationship_policy(service: str) -> dict:
 
 
 def create_iam_role(
-    role_name: str, description: str, trust_relationship: dict, region=aws_region
+    role_name: str, description: str, trust_relationship: dict, region=AWS_REGION
 ) -> str | None:
     """
     Create an IAM role if it doesn't exist.
@@ -244,7 +241,7 @@ def create_iam_role(
             return None
 
 
-def attach_managed_policy(role_name: str, policy_arn: str, region=aws_region) -> bool:
+def attach_managed_policy(role_name: str, policy_arn: str, region=AWS_REGION) -> bool:
     """
     Attach a managed policy to an IAM role.
 
@@ -280,7 +277,7 @@ def attach_managed_policy(role_name: str, policy_arn: str, region=aws_region) ->
 
 
 def create_custom_policy(
-    policy_name: str, description: str, policy_document: dict, region=aws_region
+    policy_name: str, description: str, policy_document: dict, region=AWS_REGION
 ) -> str | None:
     """
     Create a custom IAM policy if it doesn't exist.
@@ -319,7 +316,7 @@ def create_custom_policy(
 
 
 def create_instance_profile(
-    profile_name: str, role_name: str, region=aws_region
+    profile_name: str, role_name: str, region=AWS_REGION
 ) -> str | None:
     """
     Create an instance profile and add a role to it.
@@ -385,7 +382,7 @@ def create_instance_profile(
         return None
 
 
-def setup_iam_roles(region=aws_region) -> dict:
+def setup_iam_roles(region=AWS_REGION) -> dict:
     """
     Set up all IAM roles and permissions.
 
@@ -531,7 +528,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Set up IAM roles and permissions")
     parser.add_argument(
         "--region",
-        default=aws_region,
+        default=AWS_REGION,
         help="AWS region (default: use AWS CLI configuration)",
     )
 
