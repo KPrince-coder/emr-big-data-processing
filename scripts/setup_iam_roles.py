@@ -175,6 +175,7 @@ IAM_ROLES = {
                             "Action": "iam:PassRole",
                             "Resource": [
                                 "arn:aws:iam::*:role/EMR*",
+                                "arn:aws:iam::*:role/EMR_EC2_DefaultRole",
                                 "arn:aws:iam::*:role/AWSGlueServiceRole*",
                             ],
                             "Condition": {
