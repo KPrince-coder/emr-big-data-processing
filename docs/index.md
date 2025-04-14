@@ -271,7 +271,9 @@ The complete workflow consists of several phases:
 
 ### Execution Order
 
-The scripts should be executed in a specific order to ensure all dependencies are met. The [Workflow Guide](workflow.md) provides a detailed execution order diagram and step-by-step instructions.
+The scripts should be executed in a specific order to ensure all dependencies are met. The [Workflow Guide](workflow.md) provides a detailed execution order diagram using Mermaid and step-by-step instructions.
+
+The diagram visualizes the workflow phases, dependencies between steps, and alternative execution paths using the Step Functions orchestration.
 
 ### Recommended Approaches
 

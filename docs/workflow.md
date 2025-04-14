@@ -145,56 +145,50 @@ The main phases are:
 
 ## Execution Order Diagram
 
-```
-Setup Phase (One-time):
-┌─────────────────────┐
-│ 1. Setup IAM Roles  │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│ 2. Setup AWS Env    │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐     ┌─────────────────────┐
-│ 3. Setup Glue       │     │ 4. Deploy Step      │
-│    Crawlers         │     │    Functions        │
-└──────────┬──────────┘     └──────────┬──────────┘
-           │                            │
-           └────────────┬───────────────┘
-                        │
-                        ▼
-Data Processing Phase (Repeatable):
-┌─────────────────────┐
-│ 5. Create EMR       │
-│    Cluster          │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│ 6. Run Spark Jobs   │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│ 7. Run Glue         │
-│    Crawlers         │
-└──────────┬──────────┘
-           ▼
-┌─────────────────────┐
-│ 8. Terminate EMR    │
-│    Cluster          │
-└─────────────────────┘
+```mermaid
+graph TD
+    %% Setup Phase
+    subgraph "Setup Phase (One-time)"
+        A["1. Setup IAM Roles"] --> B["2. Setup AWS Env"]
+        B --> C["3. Setup Glue Crawlers"]
+        B --> D["4. Deploy Step Functions"]
+        C --> E["Ready for Processing"]
+        D --> E
+    end
 
-Orchestration (Alternative):
-┌─────────────────────┐
-│ 9. Execute Step     │
-│    Functions        │
-└─────────────────────┘
-(Orchestrates steps 5-8)
+    %% Data Processing Phase
+    subgraph "Data Processing Phase (Repeatable)"
+        E --> F["5. Create EMR Cluster"]
+        F --> G["6. Run Spark Jobs"]
+        G --> H["7. Run Glue Crawlers"]
+        H --> I["8. Terminate EMR Cluster"]
+    end
 
-Analysis Phase:
-┌─────────────────────┐
-│ 10. Query with      │
-│     Athena          │
-└─────────────────────┘
+    %% Orchestration Alternative
+    subgraph "Orchestration (Alternative)"
+        E --> J["9. Execute Step Functions"]
+        J -.-> |"Orchestrates"| F
+        J -.-> |"Orchestrates"| G
+        J -.-> |"Orchestrates"| H
+        J -.-> |"Orchestrates"| I
+    end
+
+    %% Analysis Phase
+    subgraph "Analysis Phase"
+        I --> K["10. Query with Athena"]
+        J --> K
+    end
+
+    %% Styling with improved text visibility
+    classDef setup fill:#c2e0f4,stroke:#0066cc,stroke-width:2px,color:#000000,font-weight:bold
+    classDef processing fill:#c2e0c9,stroke:#006633,stroke-width:2px,color:#000000,font-weight:bold
+    classDef orchestration fill:#f4e5c2,stroke:#cc6600,stroke-width:2px,color:#000000,font-weight:bold
+    classDef analysis fill:#e5c2e0,stroke:#660066,stroke-width:2px,color:#000000,font-weight:bold
+
+    class A,B,C,D,E setup
+    class F,G,H,I processing
+    class J orchestration
+    class K analysis
 ```
 
 ## Main Script
