@@ -38,7 +38,13 @@ The project uses a car rental marketplace dataset as a case study, processing an
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [Getting Help](#getting-help)
-  - [References](#references)
+  - [Project Documentation](#project-documentation)
+    - [Setup and Configuration](#setup-and-configuration)
+    - [Core Technologies](#core-technologies)
+    - [Workflow and Execution](#workflow-and-execution)
+    - [Components](#components)
+    - [Support](#support)
+  - [External References](#external-references)
 
 ## Project Overview
 
@@ -247,6 +253,8 @@ python scripts/terminate_emr_cluster.py <cluster-id>
 
 For a detailed guide on the project workflow, including the order in which scripts should be executed, dependencies between components, and recommended approaches for different scenarios, refer to the [Workflow Guide](workflow.md).
 
+For a comprehensive guide on how the Step Functions execution works, including detailed diagrams of the workflow and coordination between different AWS services, refer to the [Step Functions Execution Guide](step_functions_execution_guide.md).
+
 ### Complete Workflow
 
 The complete workflow consists of several phases:
@@ -287,8 +295,7 @@ The [Workflow Guide](workflow.md) provides recommended approaches for different 
 
 ### Project Structure
 
-```markdown
-.
+```python
 ├── README.md                 # Project documentation
 ├── CHANGELOG.md              # Track project progress
 ├── ROADMAP.md                # Project roadmap and technical explanations
@@ -377,7 +384,36 @@ If you encounter issues:
 2. Check the project issues on GitHub
 3. Contact the project maintainers
 
-## References
+## Project Documentation
+
+This project includes comprehensive documentation on various aspects of the system:
+
+### Setup and Configuration
+
+- [Setup Scripts Guide](setup_scripts.md) - Detailed explanation of the setup scripts and their usage
+- [Environment Variables Guide](environment_variables.md) - How environment variables are managed in the project
+
+### Core Technologies
+
+- [PySpark and PyArrow Guide](pyspark_pyarrow_guide.md) - Comprehensive guide to PySpark and PyArrow
+
+### Workflow and Execution
+
+- [Workflow Guide](workflow.md) - Overview of the project workflow and execution order
+- [Running Scripts Guide](running_scripts.md) - How to run the various scripts in the project
+- [Step Functions Execution Guide](step_functions_execution_guide.md) - Detailed explanation of the Step Functions workflow
+
+### Components
+
+- [AWS Integration Guide](aws_integration.md) - How the project integrates with AWS services
+- [Data Processing Guide](data_processing.md) - Details of the data processing pipeline
+- [Analysis and Visualization Guide](analysis_visualization.md) - How to analyze and visualize the processed data
+
+### Support
+
+- [Troubleshooting Guide](troubleshooting.md) - Common issues and their solutions
+
+## External References
 
 - [AWS EMR Documentation](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-what-is-emr.html)
 - [Apache Spark Documentation](https://spark.apache.org/docs/latest/)
