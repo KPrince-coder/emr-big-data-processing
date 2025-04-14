@@ -16,14 +16,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables from the .env file (if it exists)
-env_path = Path(__file__).parent.parent / ".env"  # Path to the .env file
-load_dotenv(
-    dotenv_path=env_path
-) if env_path.exists() else None  # Load environment variables from the .env file (if it exists)
+# Path to the .env file
+env_path = Path(__file__).parent.parent / ".env"
 
 
-def get_env_var(var_name: str, default=None, required=False) -> str:
+def reload_env_vars():
+    """
+    Reload environment variables from the .env file.
+    This ensures we always have the latest values.
+    """
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=True)
+        logger.debug(f"Loaded environment variables from {env_path}")
+    else:
+        logger.warning(f".env file not found at {env_path}")
+
+
+# Load environment variables when the module is imported
+reload_env_vars()
+
+
+def get_env_var(var_name: str, default=None, required=False, reload=False) -> str:
     """
     Get an environment variable.
 
@@ -31,6 +44,7 @@ def get_env_var(var_name: str, default=None, required=False) -> str:
         var_name (str): Name of the environment variable
         default: Default value to return if the variable is not set
         required (bool): Whether the variable is required
+        reload (bool): Whether to reload environment variables before getting the value
 
     Returns:
         The value of the environment variable, or the default value
@@ -38,6 +52,10 @@ def get_env_var(var_name: str, default=None, required=False) -> str:
     Raises:
         ValueError: If the variable is required but not set
     """
+    # Optionally reload environment variables to ensure we have the latest values
+    if reload:
+        reload_env_vars()
+
     value = os.getenv(var_name, default)
 
     if required and value is None:
@@ -216,8 +234,9 @@ def get_aws_region() -> str:
 def get_aws_bucket() -> str:
     """
     Get AWS bucket name from environment variables.
+    Always reloads from .env file to ensure we have the latest value.
 
     Returns:
         str: AWS bucket name
     """
-    return get_env_var("S3_BUCKET_NAME", required=True)
+    return get_env_var("S3_BUCKET_NAME", required=True, reload=True)
