@@ -10,22 +10,24 @@ Usage:
 """
 
 import os
+import sys
+
 import argparse
+
 import boto3
 from botocore.exceptions import ClientError
-import sys
+
 import glob
 
-# Add the project root directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+# Import project configuration
+from config.aws_config import AWS_REGION, S3_CONFIG
 from utils.logging_config import configure_logger
 
 # Configure logger
 logger = configure_logger(__name__)
 
 
-def create_s3_bucket(bucket_name, region=None):
+def create_s3_bucket(bucket_name: str, region=AWS_REGION) -> bool:
     """
     Create an S3 bucket in the specified region.
 
@@ -40,7 +42,7 @@ def create_s3_bucket(bucket_name, region=None):
         s3_client = boto3.client("s3", region_name=region)
 
         # Set up bucket configuration
-        if region is None or region == "us-east-1":
+        if region == "us-east-1":
             # 'us-east-1' is the default region, and doesn't use LocationConstraint
             s3_client.create_bucket(Bucket=bucket_name)
         else:
@@ -65,7 +67,7 @@ def create_s3_bucket(bucket_name, region=None):
             return False
 
 
-def create_folder_structure(bucket_name, region=None):
+def create_folder_structure(bucket_name: str, region=AWS_REGION) -> bool:
     """
     Create the folder structure in the S3 bucket.
 
@@ -79,18 +81,8 @@ def create_folder_structure(bucket_name, region=None):
     try:
         s3_client = boto3.client("s3", region_name=region)
 
-        # Define the folder structure
-        folders = [
-            "raw/vehicles/",
-            "raw/users/",
-            "raw/locations/",
-            "raw/rental_transactions/",
-            "processed/vehicle_location_metrics/",
-            "processed/user_transaction_analysis/",
-            "temp/athena_results/",
-            "scripts/",
-            "logs/emr/",
-        ]
+        # Get folder structure from S3_CONFIG
+        folders = list(S3_CONFIG["folders"].values())
 
         # Create each folder (S3 doesn't actually have folders, but we can create empty objects with folder names)
         for folder in folders:
@@ -103,7 +95,9 @@ def create_folder_structure(bucket_name, region=None):
         return False
 
 
-def upload_file_to_s3(file_path, bucket_name, object_name=None, region=None):
+def upload_file_to_s3(
+    file_path: str, bucket_name: str, object_name=None, region=AWS_REGION
+) -> bool:
     """
     Upload a file to an S3 bucket.
 
@@ -135,7 +129,7 @@ def upload_file_to_s3(file_path, bucket_name, object_name=None, region=None):
         return False
 
 
-def upload_data_files(bucket_name, data_dir, region=None):
+def upload_data_files(bucket_name: str, data_dir: str, region=AWS_REGION) -> bool:
     """
     Upload data files to the S3 bucket.
 
@@ -153,12 +147,12 @@ def upload_data_files(bucket_name, data_dir, region=None):
             logger.error(f"Data directory '{data_dir}' does not exist")
             return False
 
-        # Define dataset folders and their S3 destinations
+        # Define dataset folders and their S3 destinations from S3_CONFIG
         datasets = {
-            "vehicles": "raw/vehicles/",
-            "users": "raw/users/",
-            "locations": "raw/locations/",
-            "rental_transactions": "raw/rental_transactions/",
+            "vehicles": S3_CONFIG["folders"]["vehicles"],
+            "users": S3_CONFIG["folders"]["users"],
+            "locations": S3_CONFIG["folders"]["locations"],
+            "rental_transactions": S3_CONFIG["folders"]["rental_transactions"],
         }
 
         success = True
@@ -191,7 +185,7 @@ def upload_data_files(bucket_name, data_dir, region=None):
         return False
 
 
-def upload_spark_scripts(bucket_name, spark_dir, region=None):
+def upload_spark_scripts(bucket_name: str, spark_dir: str, region=AWS_REGION) -> bool:
     """
     Upload Spark scripts to the S3 bucket.
 
@@ -213,7 +207,9 @@ def upload_spark_scripts(bucket_name, spark_dir, region=None):
 
         # Upload each Python script in the spark directory
         for script_file in glob.glob(os.path.join(spark_dir, "*.py")):
-            object_name = "scripts/" + os.path.basename(script_file)
+            object_name = S3_CONFIG["folders"]["scripts"] + os.path.basename(
+                script_file
+            )
             if not upload_file_to_s3(script_file, bucket_name, object_name, region):
                 success = False
 
@@ -223,14 +219,16 @@ def upload_spark_scripts(bucket_name, spark_dir, region=None):
         return False
 
 
-def main():
+def main() -> None:
     """Main function to set up the S3 bucket and load data."""
     parser = argparse.ArgumentParser(description="Set up S3 bucket and load data")
     parser.add_argument(
         "--bucket-name", required=True, help="Name of the S3 bucket to create"
     )
     parser.add_argument(
-        "--region", default=None, help="AWS region (default: use AWS CLI configuration)"
+        "--region",
+        default=AWS_REGION,
+        help="AWS region (default: use AWS CLI configuration)",
     )
     parser.add_argument(
         "--data-dir",

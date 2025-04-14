@@ -132,8 +132,9 @@ pip install -e .
 For this project, we recommend using the **module approach** (Method 1) for running scripts as it provides the best balance of correctness and ease of use. This approach ensures proper package structure while avoiding path manipulation.
 
 ```bash
-# Example of recommended approach
+# Examples of recommended approach
 python -m scripts.setup_iam_roles
+python -m scripts.setup_s3_bucket --bucket-name your-bucket-name --region your-region
 ```
 
 This approach works well with the project's structure and ensures consistent behavior across different environments.

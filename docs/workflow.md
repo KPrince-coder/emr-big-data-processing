@@ -47,17 +47,27 @@ The main phases are:
      python scripts/setup_iam_roles.py --region us-east-1
      ```
 
-2. **Set up AWS environment**
-   - Script: `scripts/setup_aws_environment.py`
-   - Purpose: Creates S3 bucket and uploads initial data
+2. **Set up S3 bucket**
+   - Script: `scripts/setup_s3_bucket.py`
+   - Purpose: Creates S3 bucket with folder structure and uploads initial data
    - Dependencies: IAM roles from step 1
+   - Command:
+
+     ```bash
+     python scripts/setup_s3_bucket.py --bucket-name your-bucket-name --region your-region
+     ```
+
+3. **Set up AWS environment**
+   - Script: `scripts/setup_aws_environment.py`
+   - Purpose: Sets up additional AWS resources
+   - Dependencies: IAM roles from step 1, S3 bucket from step 2
    - Command:
 
      ```bash
      python scripts/setup_aws_environment.py
      ```
 
-3. **Set up Glue database and crawlers**
+4. **Set up Glue database and crawlers**
    - Script: `scripts/setup_glue_crawlers.py`
    - Purpose: Creates Glue database and crawlers for data catalog
    - Dependencies: S3 bucket from step 2, IAM roles from step 1
@@ -67,7 +77,7 @@ The main phases are:
      python scripts/setup_glue_crawlers.py
      ```
 
-4. **Deploy Step Functions workflow**
+5. **Deploy Step Functions workflow**
    - Script: `scripts/deploy_step_functions.py`
    - Purpose: Creates or updates the Step Functions state machine
    - Dependencies: IAM roles from step 1
@@ -79,7 +89,7 @@ The main phases are:
 
 ### 2. Data Processing Phase (Repeatable)
 
-5. **Create EMR cluster**
+6. **Create EMR cluster**
    - Script: `scripts/create_emr_cluster.py`
    - Purpose: Creates an EMR cluster for data processing
    - Dependencies: IAM roles from step 1, S3 bucket from step 2
@@ -89,7 +99,7 @@ The main phases are:
      python scripts/create_emr_cluster.py
      ```
 
-6. **Run Spark jobs**
+7. **Run Spark jobs**
    - Script: `scripts/run_spark_jobs.py`
    - Purpose: Submits Spark jobs to the EMR cluster
    - Dependencies: EMR cluster from step 5, S3 bucket from step 2
@@ -99,7 +109,7 @@ The main phases are:
      python scripts/run_spark_jobs.py --cluster-id j-XXXXXXXXXX
      ```
 
-7. **Run Glue crawlers**
+8. **Run Glue crawlers**
    - Script: `scripts/run_glue_crawlers.py`
    - Purpose: Runs Glue crawlers to update the data catalog
    - Dependencies: Glue crawlers from step 3, processed data from step 6
@@ -109,7 +119,7 @@ The main phases are:
      python scripts/run_glue_crawlers.py
      ```
 
-8. **Terminate EMR cluster**
+9. **Terminate EMR cluster**
    - Script: `scripts/terminate_emr_cluster.py`
    - Purpose: Terminates the EMR cluster to save costs
    - Dependencies: EMR cluster from step 5
@@ -121,11 +131,12 @@ The main phases are:
 
 ### 3. Orchestration (Alternative to manual execution)
 
-9. **Execute Step Functions workflow**
-   - Script: `scripts/execute_step_functions.py`
-   - Purpose: Executes the Step Functions workflow that orchestrates steps 5-8
-   - Dependencies: Step Functions workflow from step 4
-   - Command:
+10. **Execute Step Functions workflow**
+
+- Script: `scripts/execute_step_functions.py`
+- Purpose: Executes the Step Functions workflow that orchestrates steps 5-8
+- Dependencies: Step Functions workflow from step 4
+- Command:
 
      ```bash
      python scripts/execute_step_functions.py
@@ -133,7 +144,7 @@ The main phases are:
 
 ### 4. Analysis Phase
 
-10. **Query data with Athena**
+11. **Query data with Athena**
     - Script: `notebooks/athena_queries.ipynb`
     - Purpose: Runs SQL queries on the processed data
     - Dependencies: Glue data catalog from step 7
@@ -149,34 +160,35 @@ The main phases are:
 graph TD
     %% Setup Phase
     subgraph "Setup Phase (One-time)"
-        A[("1\. Setup IAM<br/>Roles")] --> B[("2\. Setup AWS<br/>Env")]
-        B --> C[("3\. Setup Glue<br/>Crawlers")]
-        B --> D[("4\. Deploy Step<br/>Functions")]
-        C --> E[("Ready for<br/>Processing")]
-        D --> E
+        A[("1\. Setup IAM<br/>Roles")] --> B[("2\. Setup S3<br/>Bucket")]
+        B --> C[("3\. Setup AWS<br/>Env")]
+        C --> D[("4\. Setup Glue<br/>Crawlers")]
+        C --> E[("5\. Deploy Step<br/>Functions")]
+        D --> F[("Ready for<br/>Processing")]
+        E --> F
     end
 
     %% Data Processing Phase
     subgraph "Data Processing Phase (Repeatable)"
-        E --> F[("5\. Create EMR<br/>Cluster")]
-        F --> G[("6\. Run Spark<br/>Jobs")]
-        G --> H[("7\. Run Glue<br/>Crawlers")]
-        H --> I[("8\. Terminate EMR<br/>Cluster")]
+        F --> G[("6\. Create EMR<br/>Cluster")]
+        G --> H[("7\. Run Spark<br/>Jobs")]
+        H --> I[("8\. Run Glue<br/>Crawlers")]
+        I --> J[("9\. Terminate EMR<br/>Cluster")]
     end
 
     %% Orchestration Alternative
     subgraph "Orchestration (Alternative)"
-        E --> J[("9\. Execute Step<br/>Functions")]
-        J -.-> |"Orchestrates"| F
-        J -.-> |"Orchestrates"| G
-        J -.-> |"Orchestrates"| H
-        J -.-> |"Orchestrates"| I
+        F --> K[("10\. Execute Step<br/>Functions")]
+        K -.-> |"Orchestrates"| G
+        K -.-> |"Orchestrates"| H
+        K -.-> |"Orchestrates"| I
+        K -.-> |"Orchestrates"| J
     end
 
     %% Analysis Phase
     subgraph "Analysis Phase"
-        I --> K[("10\. Query with<br/>Athena")]
-        J --> K
+        J --> L[("11\. Query with<br/>Athena")]
+        K --> L
     end
 
     %% Styling with improved text visibility
@@ -185,10 +197,10 @@ graph TD
     classDef orchestration fill:#f4e5c2,stroke:#cc6600,stroke-width:2px,color:#000000,font-weight:bold
     classDef analysis fill:#e5c2e0,stroke:#660066,stroke-width:2px,color:#000000,font-weight:bold
 
-    class A,B,C,D,E setup
-    class F,G,H,I processing
-    class J orchestration
-    class K analysis
+    class A,B,C,D,E,F setup
+    class G,H,I,J processing
+    class K orchestration
+    class L analysis
 ```
 
 ## Main Script
@@ -252,6 +264,7 @@ For a new setup, follow this approach:
 1. **Initial Setup**:
    - Run the IAM setup script first: `python scripts/setup_iam_roles.py`
    - Update the `.env` file with the generated role ARNs (from `iam_roles.json`)
+   - Set up S3 bucket: `python scripts/setup_s3_bucket.py --bucket-name your-bucket-name`
    - Run the AWS environment setup: `python scripts/setup_aws_environment.py`
    - Set up Glue resources: `python scripts/setup_glue_crawlers.py`
    - Deploy the Step Functions workflow: `python scripts/deploy_step_functions.py`
@@ -336,4 +349,3 @@ Common workflow issues and their solutions:
    - Error: "Step Functions execution failed"
    - Solution: Check individual step logs
    - Check: Step Functions execution history for detailed error messages
-

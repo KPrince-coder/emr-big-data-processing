@@ -75,6 +75,27 @@ def get_s3_config() -> dict:
         "processed_data_prefix": "processed/",
         "temp_data_prefix": "temp/",
         "scripts_prefix": "scripts/",
+        "folders": {
+            "vehicles": get_env_var("VEHICLES_DATA", default="raw/vehicles/"),
+            "users": get_env_var("USERS_DATA", default="raw/users/"),
+            "locations": get_env_var("LOCATIONS_DATA", default="raw/locations/"),
+            "rental_transactions": get_env_var(
+                "RENTAL_TRANSACTIONS_DATA", default="raw/rental_transactions/"
+            ),
+            "vehicle_location_metrics": get_env_var(
+                "VEHICLE_LOCATION_METRICS",
+                default="processed/vehicle_location_metrics/",
+            ),
+            "user_transaction_analysis": get_env_var(
+                "USER_TRANSACTION_ANALYSIS",
+                default="processed/user_transaction_analysis/",
+            ),
+            "athena_results": get_env_var(
+                "ATHENA_RESULTS", default="temp/athena_results/"
+            ),
+            "scripts": get_env_var("SCRIPTS", default="scripts/"),
+            "logs": get_env_var("LOGS", default="logs/emr/"),
+        },
     }
 
 
