@@ -170,23 +170,7 @@ IAM_ROLES = {
                 "policy_document": {
                     "Version": "2012-10-17",
                     "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Action": "iam:PassRole",
-                            "Resource": [
-                                "arn:aws:iam::*:role/EMR*",
-                                "arn:aws:iam::*:role/EMR_EC2_DefaultRole",
-                                "arn:aws:iam::*:role/AWSGlueServiceRole*",
-                            ],
-                            "Condition": {
-                                "StringLike": {
-                                    "iam:PassedToService": [
-                                        "elasticmapreduce.amazonaws.com*",
-                                        "glue.amazonaws.com*",
-                                    ]
-                                }
-                            },
-                        }
+                        {"Effect": "Allow", "Action": "iam:PassRole", "Resource": "*"}
                     ],
                 },
             },
