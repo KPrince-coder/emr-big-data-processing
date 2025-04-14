@@ -3,26 +3,27 @@
 AWS Environment Setup Script
 
 This script sets up the AWS environment for the Big Data Processing with EMR project.
-It creates the S3 bucket, uploads the data files, and creates the necessary IAM roles.
+It creates the S3 bucket and uploads the data files.
 """
 
+import sys
 import os
+
 import boto3
 from botocore.exceptions import ClientError
-import sys
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import project configuration
-from config.aws_config import S3_CONFIG, AWS_REGION, IAM_ROLES
+from config.aws_config import S3_CONFIG, AWS_REGION
 from utils.logging_config import configure_logger
 
 # Configure logger
 logger = configure_logger(__name__)
 
 
-def create_s3_bucket(bucket_name, region=AWS_REGION):
+def create_s3_bucket(bucket_name: str, region=AWS_REGION) -> bool:
     """
     Create an S3 bucket in the specified region.
 
@@ -54,7 +55,7 @@ def create_s3_bucket(bucket_name, region=AWS_REGION):
             return False
 
 
-def upload_file_to_s3(file_path, bucket_name, object_name=None):
+def upload_file_to_s3(file_path: str, bucket_name: str, object_name=None) -> bool:
     """
     Upload a file to an S3 bucket.
 
@@ -82,7 +83,7 @@ def upload_file_to_s3(file_path, bucket_name, object_name=None):
         return False
 
 
-def upload_data_to_s3(data_dir, bucket_name, prefix):
+def upload_data_to_s3(data_dir: str, bucket_name: str, prefix: str) -> bool:
     """
     Upload all data files from a directory to an S3 bucket.
 
@@ -109,25 +110,7 @@ def upload_data_to_s3(data_dir, bucket_name, prefix):
     return success
 
 
-def create_iam_roles():
-    """
-    Create the necessary IAM roles for EMR, Glue, and Step Functions.
-
-    Note: This is a simplified version. In a real-world scenario, you would need to
-    create these roles with the appropriate permissions.
-
-    Returns:
-        bool: True if all roles were created or already exist, False on error
-    """
-    # In a real implementation, you would create the IAM roles here
-    # For this example, we'll just log a message
-    logger.info("IAM roles would be created here in a real implementation")
-    logger.info(f"Required roles: {', '.join(IAM_ROLES.values())}")
-
-    return True
-
-
-def main():
+def main() -> None:
     """Main function to set up the AWS environment."""
     logger.info("Starting AWS environment setup")
 
@@ -144,11 +127,6 @@ def main():
         data_dir, S3_CONFIG["bucket_name"], S3_CONFIG["raw_data_prefix"]
     ):
         logger.warning("Some data files could not be uploaded to S3")
-
-    # Create IAM roles
-    if not create_iam_roles():
-        logger.error("Failed to create IAM roles. Exiting.")
-        return
 
     logger.info("AWS environment setup completed successfully")
 
