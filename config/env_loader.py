@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Environment Variable Loader
 
@@ -6,23 +8,21 @@ utility functions to access them.
 """
 
 import os
-import logging
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 from utils.s3_path_utils import get_logs_path, get_processed_data_path
+from utils.logging_config import configure_logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+
+logger = configure_logger(__name__)
 
 # Path to the .env file
 env_path = Path(__file__).parent.parent / ".env"
 
 
-def reload_env_vars():
+def reload_env_vars() -> None:
     """
     Reload environment variables from the .env file.
     This ensures we always have the latest values.
