@@ -149,24 +149,24 @@ The main phases are:
 graph TD
     %% Setup Phase
     subgraph "Setup Phase (One-time)"
-        A["1. Setup IAM Roles"] --> B["2. Setup AWS Env"]
-        B --> C["3. Setup Glue Crawlers"]
-        B --> D["4. Deploy Step Functions"]
-        C --> E["Ready for Processing"]
+        A[("1\. Setup IAM<br/>Roles")] --> B[("2\. Setup AWS<br/>Env")]
+        B --> C[("3\. Setup Glue<br/>Crawlers")]
+        B --> D[("4\. Deploy Step<br/>Functions")]
+        C --> E[("Ready for<br/>Processing")]
         D --> E
     end
 
     %% Data Processing Phase
     subgraph "Data Processing Phase (Repeatable)"
-        E --> F["5. Create EMR Cluster"]
-        F --> G["6. Run Spark Jobs"]
-        G --> H["7. Run Glue Crawlers"]
-        H --> I["8. Terminate EMR Cluster"]
+        E --> F[("5\. Create EMR<br/>Cluster")]
+        F --> G[("6\. Run Spark<br/>Jobs")]
+        G --> H[("7\. Run Glue<br/>Crawlers")]
+        H --> I[("8\. Terminate EMR<br/>Cluster")]
     end
 
     %% Orchestration Alternative
     subgraph "Orchestration (Alternative)"
-        E --> J["9. Execute Step Functions"]
+        E --> J[("9\. Execute Step<br/>Functions")]
         J -.-> |"Orchestrates"| F
         J -.-> |"Orchestrates"| G
         J -.-> |"Orchestrates"| H
@@ -175,7 +175,7 @@ graph TD
 
     %% Analysis Phase
     subgraph "Analysis Phase"
-        I --> K["10. Query with Athena"]
+        I --> K[("10\. Query with<br/>Athena")]
         J --> K
     end
 
@@ -336,3 +336,4 @@ Common workflow issues and their solutions:
    - Error: "Step Functions execution failed"
    - Solution: Check individual step logs
    - Check: Step Functions execution history for detailed error messages
+
