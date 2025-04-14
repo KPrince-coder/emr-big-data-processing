@@ -23,3 +23,4 @@ env/
 # Local development files
 emr_cluster_id.txt
 *.log
+.qodo
