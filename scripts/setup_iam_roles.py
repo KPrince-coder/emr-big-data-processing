@@ -12,6 +12,8 @@ Usage:
 import argparse
 import json
 import logging
+import os
+import re
 import sys
 import time
 import boto3
@@ -451,6 +453,82 @@ def setup_iam_roles(region=aws_region) -> dict:
     return role_arns
 
 
+def update_env_file(role_arns: dict, region: str) -> None:
+    """
+    Update the .env file with IAM role ARNs and other configuration.
+
+    Args:
+        role_arns (dict): Dictionary of role keys to ARNs
+        region (str): AWS region
+    """
+    env_file_path = ".env"
+
+    # Check if .env file exists
+    if not os.path.exists(env_file_path):
+        logger.warning(f".env file not found at {env_file_path}. Creating a new one.")
+        with open(env_file_path, "w") as f:
+            f.write("# AWS Configuration Environment Variables\n\n")
+
+    # Read existing .env file
+    with open(env_file_path, "r") as f:
+        env_content = f.read()
+
+    # Define sections and their variables
+    sections = {
+        "# AWS Credentials": {"AWS_REGION": region},
+        "# IAM Roles": {
+            "EMR_SERVICE_ROLE": IAM_ROLES["emr_service_role"]["name"],
+            "EMR_EC2_INSTANCE_PROFILE": IAM_ROLES["emr_ec2_role"]["name"],
+            "GLUE_SERVICE_ROLE": IAM_ROLES["glue_service_role"]["name"],
+            "STEP_FUNCTIONS_ROLE_ARN": role_arns.get("step_functions_role", ""),
+            "LAMBDA_EXECUTION_ROLE_ARN": role_arns.get("lambda_execution_role", ""),
+        },
+    }
+
+    # Update or add variables in each section
+    for section_header, variables in sections.items():
+        # Check if section exists
+        if section_header not in env_content:
+            env_content += f"\n{section_header}\n"
+
+        # Update or add each variable
+        for var_name, var_value in variables.items():
+            # Skip empty values
+            if not var_value:
+                continue
+
+            # Create regex pattern to find existing variable
+            pattern = re.compile(f"^{var_name}=.*$", re.MULTILINE)
+            replacement = f"{var_name}={var_value}"
+
+            # Check if variable exists and update it
+            if pattern.search(env_content):
+                env_content = pattern.sub(replacement, env_content)
+            else:
+                # Find the section and add the variable after it
+                section_pos = env_content.find(section_header)
+                if section_pos != -1:
+                    section_end = env_content.find("\n\n", section_pos)
+                    if section_end == -1:  # If no blank line after section
+                        section_end = len(env_content)
+
+                    # Insert the new variable at the end of the section
+                    env_content = (
+                        env_content[:section_end]
+                        + f"\n{replacement}"
+                        + env_content[section_end:]
+                    )
+                else:
+                    # If section not found (shouldn't happen), append to end
+                    env_content += f"{replacement}\n"
+
+    # Write updated content back to .env file
+    with open(env_file_path, "w") as f:
+        f.write(env_content)
+
+    logger.info(f"Updated .env file with IAM roles and ARNs at {env_file_path}")
+
+
 def main() -> None:
     """Main function to set up IAM roles and permissions."""
     parser = argparse.ArgumentParser(description="Set up IAM roles and permissions")
@@ -476,6 +554,9 @@ def main() -> None:
         with open("iam_roles.json", "w") as f:
             json.dump(role_arns, f, indent=2)
         logger.info("Role ARNs saved to iam_roles.json")
+
+        # Update .env file with role ARNs
+        update_env_file(role_arns, args.region)
     else:
         logger.error("Failed to set up IAM roles and permissions")
         sys.exit(1)
