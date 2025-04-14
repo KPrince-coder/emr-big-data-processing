@@ -304,10 +304,10 @@ def create_custom_policy(
     policy_name: str, description: str, policy_document: dict, region=AWS_REGION
 ) -> str | None:
     """
-    Create a custom IAM policy if it doesn't exist.
+    Create a custom IAM policy if it doesn't exist, or update it if it does.
 
     Args:
-        policy_name (str): Name of the policy to create
+        policy_name (str): Name of the policy to create or update
         description (str): Description of the policy
         policy_document (dict): Policy document
         region (str): AWS region
@@ -319,23 +319,64 @@ def create_custom_policy(
 
     try:
         # List policies to check if it exists
+        policy_arn = None
         paginator = iam_client.get_paginator("list_policies")
         for page in paginator.paginate(Scope="Local"):
             for policy in page["Policies"]:
                 if policy["PolicyName"] == policy_name:
+                    policy_arn = policy["Arn"]
                     logger.info(f"Custom policy '{policy_name}' already exists")
-                    return policy["Arn"]
 
-        # Create the policy
-        response = iam_client.create_policy(
-            PolicyName=policy_name,
-            PolicyDocument=json.dumps(policy_document),
-            Description=description,
-        )
-        logger.info(f"Custom policy '{policy_name}' created successfully")
-        return response["Policy"]["Arn"]
+                    # Get the current policy version
+                    policy_versions = iam_client.list_policy_versions(
+                        PolicyArn=policy_arn
+                    )
+
+                    # Check if we need to delete the oldest version (AWS limits to 5 versions)
+                    if len(policy_versions["Versions"]) >= 5:
+                        # Find the oldest non-default version
+                        oldest_version = None
+                        oldest_date = None
+                        for version in policy_versions["Versions"]:
+                            if not version["IsDefaultVersion"]:
+                                if (
+                                    oldest_date is None
+                                    or version["CreateDate"] < oldest_date
+                                ):
+                                    oldest_date = version["CreateDate"]
+                                    oldest_version = version["VersionId"]
+
+                        # Delete the oldest version if found
+                        if oldest_version:
+                            iam_client.delete_policy_version(
+                                PolicyArn=policy_arn, VersionId=oldest_version
+                            )
+                            logger.info(
+                                f"Deleted oldest version {oldest_version} of policy '{policy_name}'"
+                            )
+
+                    # Create a new version of the policy
+                    iam_client.create_policy_version(
+                        PolicyArn=policy_arn,
+                        PolicyDocument=json.dumps(policy_document),
+                        SetAsDefault=True,
+                    )
+                    logger.info(f"Updated policy '{policy_name}' with new permissions")
+                    return policy_arn
+
+        # If policy doesn't exist, create it
+        if not policy_arn:
+            response = iam_client.create_policy(
+                PolicyName=policy_name,
+                PolicyDocument=json.dumps(policy_document),
+                Description=description,
+            )
+            logger.info(f"Custom policy '{policy_name}' created successfully")
+            return response["Policy"]["Arn"]
+
+        return policy_arn
     except ClientError as e:
-        logger.error(f"Error creating custom policy '{policy_name}': {e}")
+        logger.error(f"Error creating/updating custom policy '{policy_name}': {e}")
         return None
 
 
