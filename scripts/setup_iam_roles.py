@@ -140,6 +140,29 @@ IAM_ROLES = {
                     ],
                 },
             },
+            {
+                "name": "StepFunctionsCloudWatchLogsAccess",
+                "description": "Policy for Step Functions to write to CloudWatch Logs",
+                "policy_document": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogDelivery",
+                                "logs:GetLogDelivery",
+                                "logs:UpdateLogDelivery",
+                                "logs:DeleteLogDelivery",
+                                "logs:ListLogDeliveries",
+                                "logs:PutResourcePolicy",
+                                "logs:DescribeResourcePolicies",
+                                "logs:DescribeLogGroups",
+                            ],
+                            "Resource": "*",
+                        }
+                    ],
+                },
+            },
         ],
     },
     "lambda_execution_role": {
