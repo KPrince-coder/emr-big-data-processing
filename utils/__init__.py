@@ -2,23 +2,19 @@
 
 This package contains utility functions for the Big Data Processing with EMR project.
 It provides helper functions for common tasks such as reading CSV files and
-constructing S3 paths.
+handling S3 paths.
 
 Available modules:
 - read_csv_file: Functions for reading CSV files into Spark DataFrames
-- df_path: Functions for constructing S3 paths
 - s3_path_utils: Comprehensive utilities for handling S3 paths
 - logging_config: Standardized logging configuration for all scripts
 
-Example using df_path:
+Example using read_csv_file:
     >>> from utils.read_csv_file import df
-    >>> from utils.df_path import df_path
     >>> from pyspark.sql import SparkSession
     >>>
     >>> spark = SparkSession.builder.appName("MyApp").getOrCreate()
-    >>> s3_base_path = "s3://my-bucket/data/"
-    >>> file_path = df_path("users.csv", s3_base_path)
-    >>> users_df = df(file_path, spark)
+    >>> users_df = df("s3://my-bucket/data/users.csv", spark)
     >>> users_df.show(5)
 
 Example using s3_path_utils:
@@ -39,7 +35,6 @@ Example using s3_path_utils:
 """
 
 from utils.read_csv_file import df
-from utils.df_path import df_path
 from utils.s3_path_utils import (
     get_data_file_paths,
     get_output_paths,
@@ -58,8 +53,6 @@ from utils.logging_config import configure_logger, logger
 __all__ = [
     # read_csv_file exports
     "df",
-    # df_path exports
-    "df_path",
     # s3_path_utils exports
     "get_data_file_paths",
     "get_output_paths",
