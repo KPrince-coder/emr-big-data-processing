@@ -85,6 +85,7 @@ IAM_ROLES = {
                             "Effect": "Allow",
                             "Action": [
                                 "elasticmapreduce:AddJobFlowSteps",
+                                "elasticmapreduce:AddTags",
                                 "elasticmapreduce:CancelSteps",
                                 "elasticmapreduce:CreateJobFlow",
                                 "elasticmapreduce:DescribeCluster",
