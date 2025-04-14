@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import json
-import logging
 import os
 import re
 import sys
@@ -20,12 +19,10 @@ import boto3
 from botocore.exceptions import ClientError
 
 from config.env_loader import get_aws_region
+from utils.logging_config import configure_logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Configure logger
+logger = configure_logger(__name__)
 
 # Define IAM role names and descriptions
 IAM_ROLES = {
