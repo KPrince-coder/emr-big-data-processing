@@ -1,0 +1,7 @@
+{
+  "emr_service_role": "arn:aws:iam::529088286633:role/EMR_DefaultRole",
+  "emr_ec2_role": "arn:aws:iam::529088286633:role/EMR_EC2_DefaultRole",
+  "glue_service_role": "arn:aws:iam::529088286633:role/AWSGlueServiceRole-CarRentalCrawler",
+  "step_functions_role": "arn:aws:iam::529088286633:role/StepFunctionsExecutionRole",
+  "lambda_execution_role": "arn:aws:iam::529088286633:role/LambdaGlueCrawlerRole"
+}

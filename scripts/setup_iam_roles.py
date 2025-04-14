@@ -455,7 +455,9 @@ def main() -> None:
     """Main function to set up IAM roles and permissions."""
     parser = argparse.ArgumentParser(description="Set up IAM roles and permissions")
     parser.add_argument(
-        "--region", default=None, help="AWS region (default: use AWS CLI configuration)"
+        "--region",
+        default=aws_region,
+        help="AWS region (default: use AWS CLI configuration)",
     )
 
     args = parser.parse_args()
