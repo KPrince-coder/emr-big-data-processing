@@ -8,6 +8,7 @@ Available modules:
 - read_csv_file: Functions for reading CSV files into Spark DataFrames
 - df_path: Functions for constructing S3 paths
 - s3_path_utils: Comprehensive utilities for handling S3 paths
+- logging_config: Standardized logging configuration for all scripts
 
 Example using df_path:
     >>> from utils.read_csv_file import df
@@ -52,6 +53,7 @@ from utils.s3_path_utils import (
     get_s3_bucket_and_key,
     is_valid_s3_uri,
 )
+from utils.logging_config import configure_logger, logger
 
 __all__ = [
     # read_csv_file exports
@@ -70,4 +72,7 @@ __all__ = [
     "construct_s3_uri",
     "get_s3_bucket_and_key",
     "is_valid_s3_uri",
+    # logging_config exports
+    "configure_logger",
+    "logger",
 ]
