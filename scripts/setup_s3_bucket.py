@@ -9,19 +9,13 @@ Usage:
     python setup_s3_bucket.py [--bucket-name your-bucket-name] [--region your-region]
 """
 
-import os
 import sys
 import argparse
 
 # Import project configuration
 from config.aws_config import AWS_REGION, S3_CONFIG
 from utils.logging_config import configure_logger
-from utils.s3_utils import (
-    create_s3_bucket,
-    create_folder_structure,
-    upload_data_files,
-    upload_spark_scripts,
-)
+from utils.s3_utils import create_s3_bucket, create_folder_structure
 
 # Configure logger
 logger = configure_logger(__name__)
@@ -40,16 +34,7 @@ def main() -> None:
         default=AWS_REGION,
         help="AWS region (default: use AWS CLI configuration)",
     )
-    parser.add_argument(
-        "--data-dir",
-        default="data",
-        help="Directory containing data files (default: data)",
-    )
-    parser.add_argument(
-        "--spark-dir",
-        default="spark",
-        help="Directory containing Spark scripts (default: spark)",
-    )
+    # No data or spark directory parameters needed as this script only creates the bucket
 
     args = parser.parse_args()
 
@@ -69,17 +54,7 @@ def main() -> None:
         logger.error("Failed to create folder structure. Exiting.")
         sys.exit(1)
 
-    # Upload data files
-    data_dir = os.path.abspath(args.data_dir)
-    logger.info(f"Uploading data files from '{data_dir}'")
-    if not upload_data_files(args.bucket_name, data_dir, args.region):
-        logger.warning("Some data files could not be uploaded")
-
-    # Upload Spark scripts
-    spark_dir = os.path.abspath(args.spark_dir)
-    logger.info(f"Uploading Spark scripts from '{spark_dir}'")
-    if not upload_spark_scripts(args.bucket_name, spark_dir, args.region):
-        logger.warning("Some Spark scripts could not be uploaded")
+    # No data upload in this script - that's handled by setup_aws_environment.py
 
     logger.info(f"S3 bucket '{args.bucket_name}' setup completed successfully")
 
