@@ -27,6 +27,10 @@ The project uses a car rental marketplace dataset as a case study, processing an
     - [Deployment Options](#deployment-options)
     - [Monitoring](#monitoring)
     - [Cleaning Up](#cleaning-up)
+  - [Workflow Guide](#workflow-guide)
+    - [Complete Workflow](#complete-workflow)
+    - [Execution Order](#execution-order)
+    - [Recommended Approaches](#recommended-approaches)
   - [Development Guide](#development-guide)
     - [Project Structure](#project-structure)
     - [Adding New Features](#adding-new-features)
@@ -238,6 +242,44 @@ To clean up the resources when you're done:
 ```bash
 python scripts/terminate_emr_cluster.py <cluster-id>
 ```
+
+## Workflow Guide
+
+For a detailed guide on the project workflow, including the order in which scripts should be executed, dependencies between components, and recommended approaches for different scenarios, refer to the [Workflow Guide](workflow.md).
+
+### Complete Workflow
+
+The complete workflow consists of several phases:
+
+1. **Setup Phase** (One-time setup)
+   - Set up IAM roles and permissions
+   - Set up AWS environment
+   - Set up Glue database and crawlers
+   - Deploy Step Functions workflow
+
+2. **Data Processing Phase** (Repeatable)
+   - Create EMR cluster
+   - Run Spark jobs
+   - Run Glue crawlers
+   - Terminate EMR cluster
+
+3. **Orchestration** (Alternative to manual execution)
+   - Execute Step Functions workflow
+
+4. **Analysis Phase**
+   - Query data with Athena
+
+### Execution Order
+
+The scripts should be executed in a specific order to ensure all dependencies are met. The [Workflow Guide](workflow.md) provides a detailed execution order diagram and step-by-step instructions.
+
+### Recommended Approaches
+
+The [Workflow Guide](workflow.md) provides recommended approaches for different scenarios:
+
+- **For New Setup**: Step-by-step guide for setting up the project from scratch
+- **For Regular Data Processing**: Options for manual and automated execution
+- **For Development and Testing**: Approaches for local and AWS testing
 
 ## Development Guide
 
