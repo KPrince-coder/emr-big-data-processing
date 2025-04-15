@@ -105,6 +105,7 @@ The architecture follows these key principles:
 - Python 3.7+
 - AWS CLI configured
 - Git
+- UV package manager (recommended) or pip
 
 ### Installation Steps
 
@@ -118,7 +119,18 @@ The architecture follows these key principles:
 2. Install the required dependencies:
 
    ```bash
+   # Using pip
    pip install -r requirements.txt
+
+   # Or using UV (recommended)
+   uv pip install -r requirements.txt
+   ```
+
+   [UV](https://github.com/astral-sh/uv) is a fast, reliable Python package installer and resolver, built in Rust. It's recommended for this project due to its speed and reliability. To install UV:
+
+   ```bash
+   # Install UV
+   curl -sSf https://install.astral.sh | sh
    ```
 
 3. Configure the environment variables:

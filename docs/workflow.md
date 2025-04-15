@@ -153,6 +153,19 @@ The main phases are:
 
    The `--environment` parameter specifies the environment (dev, test, or prod) and is passed to the Step Functions workflow as a parameter.
 
+#### Step Functions Workflow Visualization
+
+Below is a visual representation of our Step Functions workflow as seen in the AWS Step Functions console:
+
+![Step Functions Graph View](images/step_function_graph_view.png)
+
+This graph view shows the complete workflow including:
+- Creating an EMR cluster
+- Adding Spark job steps to the cluster
+- Waiting for job completion
+- Starting Glue crawlers via Lambda
+- Terminating the EMR cluster when processing is complete
+
 ### 4. Analysis Phase
 
 1. **Query data with Athena**

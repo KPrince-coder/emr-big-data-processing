@@ -39,6 +39,7 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 - AWS Account with appropriate permissions
 - Python 3.7+
 - AWS CLI configured
+- UV package manager (recommended) or pip
 - Boto3 (AWS SDK for Python)
 - PySpark (for local testing)
 
@@ -49,7 +50,16 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 2. Install the required dependencies:
 
    ```bash
+   # Using pip
    pip install -r requirements.txt
+
+   # Or using UV (recommended)
+   uv pip install -r requirements.txt
+   ```
+
+   To install UV (recommended):
+   ```bash
+   curl -sSf https://install.astral.sh | sh
    ```
 
 3. Configure the environment variables:

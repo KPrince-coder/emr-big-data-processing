@@ -67,6 +67,7 @@ To get started with the project, follow these steps:
 
 - [Architecture Diagram](images/architecture_diagram.png) - Visual representation of the project architecture
 - [Project Mindmap](images/project_mindmap.png) - Overview of project components and their relationships
+- [Step Functions Workflow](images/step_function_graph_view.png) - Visual representation of the Step Functions workflow
 
 ## Dataset Reference
 

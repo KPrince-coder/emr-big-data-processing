@@ -124,8 +124,9 @@ pip install -e .
 1. **Consistency**: Choose one approach and use it consistently throughout the project
 2. **Documentation**: Document the chosen approach for other developers
 3. **Virtual Environments**: Always use virtual environments to isolate dependencies
-4. **Testing**: Ensure scripts can be run in both development and production environments
-5. **CI/CD**: Verify that your chosen method works in CI/CD pipelines
+4. **Package Management**: Use UV (recommended) or pip for package management
+5. **Testing**: Ensure scripts can be run in both development and production environments
+6. **CI/CD**: Verify that your chosen method works in CI/CD pipelines
 
 ## Recommended Approach
 
@@ -138,3 +139,31 @@ python -m scripts.setup_s3_bucket --bucket-name your-bucket-name --region your-r
 ```
 
 This approach works well with the project's structure and ensures consistent behavior across different environments.
+
+## Package Management with UV
+
+This project recommends using [UV](https://github.com/astral-sh/uv) as the Python package manager. UV is a fast, reliable Python package installer and resolver, built in Rust.
+
+### Installing UV
+
+```bash
+curl -sSf https://install.astral.sh | sh
+```
+
+### Installing Dependencies with UV
+
+```bash
+# Install dependencies from requirements.txt
+uv pip install -r requirements.txt
+
+# Install a specific package
+uv pip install package-name
+```
+
+### Advantages of UV
+
+- Significantly faster than pip (10-100x faster)
+- More reliable dependency resolution
+- Compatible with pip's command-line interface
+- Built-in virtual environment management
+- Improved caching and parallelization

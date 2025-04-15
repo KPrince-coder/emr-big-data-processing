@@ -91,6 +91,14 @@ flowchart TD
 
 AWS Step Functions workflows are defined using Amazon States Language (ASL), a JSON-based language. The workflow consists of a series of states that determine the execution path.
 
+### Visual Representation of Our Workflow
+
+Below is a visual representation of our Car Rental Data Pipeline workflow as seen in the AWS Step Functions console:
+
+![Step Functions Graph View](images/step_function_graph_view.png)
+
+This graph view shows the sequence of states in our workflow, including creating an EMR cluster, running Spark jobs, starting Glue crawlers, and terminating the EMR cluster.
+
 ### State Machine Structure
 
 ```mermaid
@@ -485,7 +493,7 @@ sequenceDiagram
     participant SF as Step Functions
     participant IAM as IAM Service
     participant EMR as Amazon EMR
-    
+
     SF->>IAM: PassRole (EMR_DefaultRole)
     IAM-->>SF: Success
     SF->>EMR: CreateCluster (with EMR_DefaultRole)
@@ -504,37 +512,37 @@ sequenceDiagram
     participant EMR as Amazon EMR
     participant Glue as AWS Glue
     participant S3 as Amazon S3
-    
+
     User->>Script: Run script
     Script->>SF: Start execution (with parameters)
     SF->>SF: Initialize state machine
-    
+
     SF->>EMR: Create EMR cluster
     EMR-->>SF: Return cluster ID
-    
+
     SF->>SF: Wait for cluster creation
     SF->>EMR: Check cluster status
     EMR-->>SF: Return cluster status
-    
+
     SF->>EMR: Add job steps
     EMR-->>S3: Fetch Spark scripts
     EMR->>EMR: Execute Spark jobs
-    
+
     SF->>SF: Wait for job completion
     SF->>EMR: Check job status
     EMR-->>SF: Return job status
-    
+
     SF->>Glue: Start crawler
     Glue->>S3: Crawl processed data
     Glue->>Glue: Update data catalog
-    
+
     SF->>SF: Wait for crawler completion
     SF->>Glue: Check crawler status
     Glue-->>SF: Return crawler status
-    
+
     SF->>EMR: Terminate cluster
     EMR-->>SF: Confirm termination
-    
+
     SF->>SF: Complete execution
     SF-->>Script: Return execution results
     Script-->>User: Display execution status
@@ -547,34 +555,34 @@ Step Functions provides robust error handling and retry mechanisms:
 ```mermaid
 stateDiagram-v2
     [*] --> NormalExecution
-    
+
     state NormalExecution {
         [*] --> Step1
         Step1 --> Step2
         Step2 --> Step3
         Step3 --> [*]
     }
-    
+
     NormalExecution --> ErrorHandler : Error
-    
+
     state ErrorHandler {
         [*] --> DetectErrorType
         DetectErrorType --> Retry : Transient Error
         DetectErrorType --> Fallback : Permanent Error
-        
+
         state Retry {
             [*] --> AttemptRetry
             AttemptRetry --> CheckRetryCount
             CheckRetryCount --> AttemptRetry : Count < Max
             CheckRetryCount --> Fallback : Count >= Max
         }
-        
+
         Retry --> NormalExecution : Retry Successful
         Fallback --> CleanupResources
         CleanupResources --> NotifyFailure
         NotifyFailure --> [*]
     }
-    
+
     ErrorHandler --> [*]
 ```
 
@@ -621,7 +629,7 @@ flowchart TD
         style EMR fill:#f96,stroke:#333,stroke-width:2px,color:#000
         style Glue fill:#9f9,stroke:#333,stroke-width:2px,color:#000
     end
-    
+
     subgraph "Monitoring & Logging"
         CW["CloudWatch"]
         Logs["CloudWatch Logs"]
@@ -632,21 +640,21 @@ flowchart TD
         style Metrics fill:#f99,stroke:#333,stroke-width:2px,color:#000
         style Alarms fill:#f99,stroke:#333,stroke-width:2px,color:#000
     end
-    
+
     subgraph "Notification"
         SNS["Amazon SNS"]
         Email["Email Notification"]
         style SNS fill:#9ff,stroke:#333,stroke-width:2px,color:#000
         style Email fill:#9ff,stroke:#333,stroke-width:2px,color:#000
     end
-    
+
     SF -->|"Execution\nEvents"| Logs
     SF -->|"Execution\nMetrics"| Metrics
     EMR -->|"Cluster\nLogs"| Logs
     EMR -->|"Cluster\nMetrics"| Metrics
     Glue -->|"Crawler\nLogs"| Logs
     Glue -->|"Crawler\nMetrics"| Metrics
-    
+
     Metrics --> Alarms
     Alarms -->|"Trigger\nNotification"| SNS
     SNS --> Email
