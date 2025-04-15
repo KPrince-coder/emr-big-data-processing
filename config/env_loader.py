@@ -226,6 +226,10 @@ def get_iam_roles() -> dict:
         "step_functions_role": get_env_var(
             "STEP_FUNCTIONS_ROLE_ARN", default="StepFunctionsExecutionRole"
         ),
+        "lambda_execution_role_arn": get_env_var(
+            "LAMBDA_EXECUTION_ROLE_ARN",
+            default="arn:aws:iam::529088286633:role/LambdaGlueCrawlerRole",
+        ),
     }
 
 
