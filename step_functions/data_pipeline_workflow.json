@@ -70,13 +70,7 @@
           "ActionOnFailure": "CONTINUE",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args": [
-              "spark-submit",
-              "--deploy-mode", "cluster",
-              {"Fn::Join": ["", [{"Fn::JsonToString": {"$": "$.s3_config.scripts_path"}}, "job1_vehicle_location_metrics.py"]]},
-              {"Fn::JsonToString": {"$": "$.s3_config.bucket_name"}},
-              {"Fn::JsonToString": {"$": "$.environment"}}
-            ]
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', States.Format('s3://{}/scripts/job1_vehicle_location_metrics.py', $.s3_config.bucket_name), States.Format('{}', $.s3_config.bucket_name), States.Format('{}', $.environment))"
           }
         }
       },
@@ -93,13 +87,7 @@
           "ActionOnFailure": "CONTINUE",
           "HadoopJarStep": {
             "Jar": "command-runner.jar",
-            "Args": [
-              "spark-submit",
-              "--deploy-mode", "cluster",
-              {"Fn::Join": ["", [{"Fn::JsonToString": {"$": "$.s3_config.scripts_path"}}, "job2_user_transaction_analysis.py"]]},
-              {"Fn::JsonToString": {"$": "$.s3_config.bucket_name"}},
-              {"Fn::JsonToString": {"$": "$.environment"}}
-            ]
+            "Args.$": "States.Array('spark-submit', '--deploy-mode', 'cluster', States.Format('s3://{}/scripts/job2_user_transaction_analysis.py', $.s3_config.bucket_name), States.Format('{}', $.s3_config.bucket_name), States.Format('{}', $.environment))"
           }
         }
       },
@@ -114,8 +102,8 @@
         "Payload": {
           "database.$": "$.glue_config.database_name",
           "crawlers": [
-            {"Fn::Join": ["-", ["car-rental-crawler", "vehicle_location_metrics"]]},
-            {"Fn::Join": ["-", ["car-rental-crawler", "user_transaction_analysis"]]}
+            "car-rental-crawler-vehicle_location_metrics",
+            "car-rental-crawler-user_transaction_analysis"
           ]
         }
       },

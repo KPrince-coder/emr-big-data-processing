@@ -24,7 +24,7 @@ from config.aws_config import (
     IAM_ROLES,
     AWS_REGION,
 )
-from utils.s3_path_utils import get_logs_path, get_scripts_path
+from utils.s3_path_utils import get_logs_path
 from utils.logging_config import configure_logger
 
 logger = configure_logger(__name__)
@@ -174,7 +174,6 @@ def main() -> None:
         "s3_config": {
             "bucket_name": S3_CONFIG["bucket_name"],
             "log_uri": get_logs_path("emr", S3_CONFIG, S3_CONFIG["bucket_name"]),
-            "scripts_path": get_scripts_path("", S3_CONFIG, S3_CONFIG["bucket_name"]),
         },
         "glue_config": {"database_name": GLUE_CONFIG["database_name"]},
         "iam_roles": {
