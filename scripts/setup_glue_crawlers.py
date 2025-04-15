@@ -1,9 +1,21 @@
 #!/usr/bin/env python3
-
 """
 AWS Glue Crawler Setup Script
 
-This script sets up AWS Glue crawlers to catalog the processed data in S3.
+This script automates the setup and configuration of AWS Glue crawlers for data cataloging.
+It creates necessary Glue databases and crawlers to scan and catalog data stored in S3 buckets.
+The crawlers automatically detect schema and create metadata tables in the AWS Glue Data Catalog,
+making the data readily available for analytics and querying.
+
+Features:
+- Creates Glue databases if they don't exist
+- Configures and deploys Glue crawlers for different data sources
+- Handles crawler scheduling and permissions
+- Provides logging and error handling
+
+Dependencies:
+- boto3: AWS SDK for Python
+- AWS credentials configured with appropriate permissions
 """
 
 import os
