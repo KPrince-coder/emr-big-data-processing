@@ -268,3 +268,48 @@ def upload_data_to_s3(
                     success = False
 
     return success
+
+
+def upload_utils_modules(bucket_name: str, utils_dir: str, region=AWS_REGION) -> bool:
+    """
+    Upload utility Python modules to the S3 bucket.
+
+    Args:
+        bucket_name (str): Name of the bucket
+        utils_dir (str): Directory containing utility modules
+        region (str): AWS region
+
+    Returns:
+        bool: True if all modules were uploaded successfully, False on error
+    """
+    try:
+        # Check if utils directory exists
+        if not os.path.exists(utils_dir):
+            logger.error(f"Utils directory '{utils_dir}' does not exist")
+            return False
+
+        success = True
+
+        # Create utils directory in scripts folder
+        s3_client = boto3.client("s3", region_name=region)
+        utils_s3_prefix = S3_CONFIG["folders"]["scripts"] + "utils/"
+        s3_client.put_object(Bucket=bucket_name, Key=utils_s3_prefix)
+        logger.info(f"Created folder '{utils_s3_prefix}' in bucket '{bucket_name}'")
+
+        # Upload each Python module in the utils directory
+        for module_file in glob.glob(os.path.join(utils_dir, "*.py")):
+            # Skip __pycache__ and other non-Python files
+            if (
+                os.path.basename(module_file).startswith("__")
+                and os.path.basename(module_file) != "__init__.py"
+            ):
+                continue
+
+            object_name = utils_s3_prefix + os.path.basename(module_file)
+            if not upload_file_to_s3(module_file, bucket_name, object_name, region):
+                success = False
+
+        return success
+    except Exception as e:
+        logger.error(f"Error uploading utility modules to bucket '{bucket_name}': {e}")
+        return False

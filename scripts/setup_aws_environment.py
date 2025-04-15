@@ -24,6 +24,7 @@ from utils.s3_utils import (
     upload_data_files,
     upload_spark_scripts,
     upload_data_to_s3,
+    upload_utils_modules,
 )
 
 # Configure logger
@@ -79,6 +80,14 @@ def main() -> None:
     logger.info(f"Uploading Spark scripts from '{spark_dir}'")
     if not upload_spark_scripts(args.bucket_name, spark_dir, args.region):
         logger.warning("Some Spark scripts could not be uploaded")
+
+    # Upload utility modules
+    utils_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils"
+    )
+    logger.info(f"Uploading utility modules from '{utils_dir}'")
+    if not upload_utils_modules(args.bucket_name, utils_dir, args.region):
+        logger.warning("Some utility modules could not be uploaded")
 
     logger.info("AWS environment setup completed successfully")
 

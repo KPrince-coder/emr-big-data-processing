@@ -33,8 +33,36 @@ from pyspark.sql.functions import (
 from pyspark.sql.window import Window
 import pyspark.sql.functions as F
 
-from utils.read_csv_file import df
-from utils.s3_path_utils import get_data_file_paths, get_output_paths
+# Try to import utility functions for S3 path handling
+try:
+    from utils.read_csv_file import df
+    from utils.s3_path_utils import get_data_file_paths, get_output_paths
+except ImportError:
+    # Define fallback functions if utils module is not available
+    def df(path, spark, schema=None):
+        """Read a CSV file into a Spark DataFrame."""
+        if schema:
+            return spark.read.csv(path, header=True, schema=schema, inferSchema=False)
+        else:
+            return spark.read.csv(path, header=True, inferSchema=True)
+
+    def get_data_file_paths(bucket_name, raw_data_prefix):
+        """Get the paths to the data files in S3."""
+        return {
+            "rental_transactions": f"s3://{bucket_name}/{raw_data_prefix}rental_transactions/",
+            "vehicles": f"s3://{bucket_name}/{raw_data_prefix}vehicles/",
+            "locations": f"s3://{bucket_name}/{raw_data_prefix}locations/",
+            "users": f"s3://{bucket_name}/{raw_data_prefix}users/",
+        }
+
+    def get_output_paths(bucket_name, processed_data_prefix):
+        """Get the paths to the output directories in S3."""
+        return {
+            "daily_metrics": f"s3://{bucket_name}/{processed_data_prefix}daily_metrics/",
+            "user_metrics": f"s3://{bucket_name}/{processed_data_prefix}user_metrics/",
+            "hourly_metrics": f"s3://{bucket_name}/{processed_data_prefix}hourly_metrics/",
+            "day_of_week_metrics": f"s3://{bucket_name}/{processed_data_prefix}day_of_week_metrics/",
+        }
 
 
 def create_spark_session() -> SparkSession:
