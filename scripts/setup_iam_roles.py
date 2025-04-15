@@ -457,6 +457,40 @@ def create_instance_profile(
         return None
 
 
+def create_service_linked_role(service_name: str, region=AWS_REGION) -> bool:
+    """
+    Create a service-linked role for a specific AWS service.
+
+    Args:
+        service_name (str): The AWS service name (e.g., 'elasticmapreduce.amazonaws.com')
+        region (str): AWS region
+
+    Returns:
+        bool: True if the role was created or already exists, False otherwise
+    """
+    iam_client = boto3.client("iam", region_name=region)
+
+    try:
+        # Check if the service-linked role already exists
+        try:
+            iam_client.get_role(
+                RoleName=f"AWSServiceRoleFor{service_name.split('.')[0].capitalize()}"
+            )
+            logger.info(f"Service-linked role for {service_name} already exists")
+            return True
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "NoSuchEntity":
+                raise e
+
+        # Create the service-linked role
+        iam_client.create_service_linked_role(AWSServiceName=service_name)
+        logger.info(f"Service-linked role for {service_name} created successfully")
+        return True
+    except ClientError as e:
+        logger.error(f"Error creating service-linked role for {service_name}: {e}")
+        return False
+
+
 def setup_iam_roles(region=AWS_REGION) -> dict:
     """
     Set up all IAM roles and permissions.
@@ -467,6 +501,9 @@ def setup_iam_roles(region=AWS_REGION) -> dict:
     Returns:
         dict: A dictionary mapping role keys to their ARNs
     """
+    # Create service-linked role for EMR cleanup
+    create_service_linked_role("elasticmapreduce.amazonaws.com", region)
+
     role_arns = {}
 
     for role_key, role_config in IAM_ROLES.items():
