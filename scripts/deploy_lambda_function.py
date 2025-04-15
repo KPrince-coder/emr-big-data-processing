@@ -24,6 +24,7 @@ import sys
 import argparse
 import zipfile
 import tempfile
+import time
 import boto3
 from botocore.exceptions import ClientError
 
@@ -92,6 +93,8 @@ def deploy_lambda_function(
     timeout: int = 60,
     memory_size: int = 128,
     region=AWS_REGION,
+    max_retries: int = 5,
+    retry_delay: int = 10,
 ) -> bool:
     """
     Deploy a Lambda function.
@@ -111,52 +114,76 @@ def deploy_lambda_function(
     """
     lambda_client = boto3.client("lambda", region_name=region)
 
-    try:
-        # Check if the function already exists
+    retries = 0
+    while retries <= max_retries:
         try:
-            lambda_client.get_function(FunctionName=function_name)
-            logger.info(
-                f"Lambda function '{function_name}' already exists, updating..."
-            )
+            # Check if the function already exists
+            try:
+                lambda_client.get_function(FunctionName=function_name)
+                logger.info(
+                    f"Lambda function '{function_name}' already exists, updating..."
+                )
 
-            # Update the function code
-            lambda_client.update_function_code(
-                FunctionName=function_name,
-                ZipFile=deployment_package,
-            )
+                # Update the function code
+                lambda_client.update_function_code(
+                    FunctionName=function_name,
+                    ZipFile=deployment_package,
+                )
 
-            # Update the function configuration
-            lambda_client.update_function_configuration(
-                FunctionName=function_name,
-                Handler=handler,
-                Role=role_arn,
-                Timeout=timeout,
-                MemorySize=memory_size,
-            )
+                # Update the function configuration
+                lambda_client.update_function_configuration(
+                    FunctionName=function_name,
+                    Handler=handler,
+                    Role=role_arn,
+                    Timeout=timeout,
+                    MemorySize=memory_size,
+                )
 
-            logger.info(f"Lambda function '{function_name}' updated successfully")
-            return True
+                logger.info(f"Lambda function '{function_name}' updated successfully")
+                return True
 
-        except lambda_client.exceptions.ResourceNotFoundException:
-            # Function doesn't exist, create it
-            logger.info(f"Lambda function '{function_name}' doesn't exist, creating...")
+            except lambda_client.exceptions.ResourceNotFoundException:
+                # Function doesn't exist, create it
+                logger.info(
+                    f"Lambda function '{function_name}' doesn't exist, creating..."
+                )
 
-            lambda_client.create_function(
-                FunctionName=function_name,
-                Runtime=runtime,
-                Role=role_arn,
-                Handler=handler,
-                Code={"ZipFile": deployment_package},
-                Timeout=timeout,
-                MemorySize=memory_size,
-            )
+                lambda_client.create_function(
+                    FunctionName=function_name,
+                    Runtime=runtime,
+                    Role=role_arn,
+                    Handler=handler,
+                    Code={"ZipFile": deployment_package},
+                    Timeout=timeout,
+                    MemorySize=memory_size,
+                )
 
-            logger.info(f"Lambda function '{function_name}' created successfully")
-            return True
+                logger.info(f"Lambda function '{function_name}' created successfully")
+                return True
 
-    except ClientError as e:
-        logger.error(f"Error deploying Lambda function '{function_name}': {e}")
-        return False
+        except ClientError as e:
+            if (
+                e.response["Error"]["Code"] == "ResourceConflictException"
+                and retries < max_retries
+            ):
+                # If there's a conflict (update in progress), wait and retry
+                retries += 1
+                wait_time = retry_delay * retries  # Exponential backoff
+                logger.warning(
+                    f"ResourceConflictException: Update in progress for function '{function_name}'. "
+                    f"Retrying in {wait_time} seconds (attempt {retries}/{max_retries})..."
+                )
+                time.sleep(wait_time)
+            else:
+                # For other errors or if we've exhausted retries, log and return False
+                logger.error(f"Error deploying Lambda function '{function_name}': {e}")
+                return False
+
+    # If we've exhausted all retries
+    logger.error(
+        f"Failed to deploy Lambda function '{function_name}' after {max_retries} retries"
+    )
+    return False
 
 
 def main() -> None:
@@ -199,6 +226,18 @@ def main() -> None:
         default=AWS_REGION,
         help="AWS region (default: use AWS CLI configuration)",
     )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=5,
+        help="Maximum number of retries for ResourceConflictException (default: 5)",
+    )
+    parser.add_argument(
+        "--retry-delay",
+        type=int,
+        default=10,
+        help="Initial delay between retries in seconds (default: 10)",
+    )
 
     args = parser.parse_args()
 
@@ -223,6 +262,8 @@ def main() -> None:
         args.timeout,
         args.memory_size,
         args.region,
+        args.max_retries,
+        args.retry_delay,
     ):
         logger.info("Lambda function deployment completed successfully")
     else:
