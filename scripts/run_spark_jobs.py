@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
 """
-Run Spark Jobs on EMR
+Run Spark Jobs on Amazon EMR
 
-This script runs the Spark jobs on an existing EMR cluster.
+This script provides functionality to manage and execute Apache Spark jobs on Amazon EMR (Elastic MapReduce) clusters.
+It includes utilities for:
+- Adding new steps to existing EMR clusters
+- Monitoring job execution status
+- Handling AWS EMR interactions through boto3
+- Managing Spark job configurations and parameters
+
+Dependencies:
+- boto3: AWS SDK for Python
+- Python 3.6+
+- Valid AWS credentials and configuration
+
+Usage:
+Import the required functions and use them to submit and monitor Spark jobs on EMR clusters.
+See individual function documentation for specific usage details.
 """
 
 import os
@@ -155,7 +169,7 @@ def run_user_transaction_analysis_job(cluster_id, s3_bucket, environment):
     return wait_for_step_completion(cluster_id, step_id)
 
 
-def main():
+def main() -> None:
     """Main function to run Spark jobs on EMR."""
     # Check if the required arguments are provided
     if len(sys.argv) != 3:
