@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-EMR Cluster Creation Script
+EMR Cluster Creation Script.
 
 This script creates an EMR cluster using the configuration defined in the project.
+
+Usage:
+    python create_emr_cluster.py
 """
 
 import os
-import json
-import boto3
 import sys
+import json
 import time
+
+import boto3
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,7 +26,7 @@ from utils.logging_config import configure_logger
 logger = configure_logger(__name__)
 
 
-def create_emr_cluster():
+def create_emr_cluster() -> str | None:
     """
     Create an EMR cluster using the configuration defined in config/emr_config.json.
 
@@ -53,7 +57,7 @@ def create_emr_cluster():
         return None
 
 
-def wait_for_cluster_creation(cluster_id):
+def wait_for_cluster_creation(cluster_id: str) -> bool:
     """
     Wait for the EMR cluster to be created and ready.
 
@@ -85,7 +89,7 @@ def wait_for_cluster_creation(cluster_id):
             return False
 
 
-def main():
+def main() -> None:
     """Main function to create an EMR cluster."""
     logger.info("Starting EMR cluster creation")
 
@@ -100,7 +104,7 @@ def main():
         # Save the cluster ID to a file for later use
         with open("emr_cluster_id.txt", "w") as f:
             f.write(cluster_id)
-        logger.info(f"Cluster ID saved to emr_cluster_id.txt")
+            logger.info(f"Cluster ID saved to {f}")
     else:
         logger.error("EMR cluster creation failed or timed out")
 
