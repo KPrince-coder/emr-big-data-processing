@@ -151,8 +151,8 @@ def get_emr_config() -> dict:
                 "Properties": {
                     "spark.dynamicAllocation.enabled": "true",
                     "spark.executor.instances": "2",
-                    "spark.executor.memory": "4g",
-                    "spark.driver.memory": "4g",
+                    "spark.executor.memory": "2g",
+                    "spark.driver.memory": "2g",
                 },
             },
         ],
