@@ -402,6 +402,7 @@ This project includes comprehensive documentation on various aspects of the syst
 - [Workflow Guide](workflow.md) - Overview of the project workflow and execution order
 - [Running Scripts Guide](running_scripts.md) - How to run the various scripts in the project
 - [Step Functions Execution Guide](step_functions_execution_guide.md) - Detailed explanation of the Step Functions workflow
+- [Step Functions Comprehensive Guide](step_functions_comprehensive_guide.md) - Comprehensive guide on AWS Step Functions, parameterization, permissions, and roles
 
 ### Components
 
