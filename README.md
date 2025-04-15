@@ -4,7 +4,7 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
 
 ## Project Structure
 
-```markdown
+```python
 .
 ├── README.md                 # Project documentation
 ├── CHANGELOG.md              # Track project progress
@@ -58,6 +58,7 @@ This project demonstrates how to process big data using AWS EMR (Elastic MapRedu
    ```
 
    To install UV (recommended):
+
    ```bash
    curl -sSf https://install.astral.sh | sh
    ```
