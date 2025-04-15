@@ -10,12 +10,21 @@ import json
 import boto3
 import sys
 import time
+import argparse
 
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import project configuration
-from config.aws_config import STEP_FUNCTIONS_CONFIG, AWS_REGION
+from config.aws_config import (
+    STEP_FUNCTIONS_CONFIG,
+    EMR_CONFIG,
+    S3_CONFIG,
+    GLUE_CONFIG,
+    IAM_ROLES,
+    AWS_REGION,
+)
+from utils.s3_path_utils import get_logs_path, get_scripts_path
 from utils.logging_config import configure_logger
 
 logger = configure_logger(__name__)
@@ -66,7 +75,7 @@ def start_execution(
     if not execution_name:
         execution_name = f"Execution-{int(time.time())}"
 
-    # Use empty input if not provided
+    # Use default input if not provided
     if not input_data:
         input_data = {}
 
@@ -131,7 +140,19 @@ def wait_for_execution_completion(
 
 def main() -> None:
     """Main function to execute the Step Functions workflow."""
-    logger.info("Starting Step Functions workflow execution")
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Execute Step Functions workflow")
+    parser.add_argument(
+        "--environment",
+        default="prod",
+        choices=["dev", "test", "prod"],
+        help="Environment to run the workflow in (default: prod)",
+    )
+    args = parser.parse_args()
+
+    logger.info(
+        f"Starting Step Functions workflow execution in {args.environment} environment"
+    )
 
     # Get the state machine ARN
     state_machine_arn = get_state_machine_arn(
@@ -141,8 +162,30 @@ def main() -> None:
         logger.error("Failed to get state machine ARN. Exiting.")
         return
 
-    # Start the execution
-    execution_arn = start_execution(state_machine_arn)
+    # Prepare input data with configuration values
+    input_data = {
+        "emr_config": {
+            "cluster_name": EMR_CONFIG["name"],
+            "release_label": EMR_CONFIG["release_label"],
+            "master_instance_type": EMR_CONFIG["master_instance_type"],
+            "core_instance_type": EMR_CONFIG["core_instance_type"],
+            "core_instance_count": EMR_CONFIG["core_instance_count"],
+        },
+        "s3_config": {
+            "bucket_name": S3_CONFIG["bucket_name"],
+            "log_uri": get_logs_path("emr", S3_CONFIG, S3_CONFIG["bucket_name"]),
+            "scripts_path": get_scripts_path("", S3_CONFIG, S3_CONFIG["bucket_name"]),
+        },
+        "glue_config": {"database_name": GLUE_CONFIG["database_name"]},
+        "iam_roles": {
+            "emr_service_role": IAM_ROLES["emr_service_role"],
+            "emr_ec2_instance_profile": IAM_ROLES["emr_ec2_instance_profile"],
+        },
+        "environment": args.environment,
+    }
+
+    # Start the execution with the configuration data
+    execution_arn = start_execution(state_machine_arn, input_data=input_data)
     if not execution_arn:
         logger.error("Failed to start execution. Exiting.")
         return
