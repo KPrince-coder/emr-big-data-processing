@@ -13,6 +13,7 @@ Output: Transformed data in Parquet format in S3
 """
 
 import sys
+from typing import Tuple
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
     col,
@@ -28,7 +29,7 @@ from pyspark.sql.functions import (
     to_date,
     unix_timestamp,
     dayofweek,
-    first,
+    first,  # Import first function to get the first value in a group
 )
 from pyspark.sql.window import Window
 import pyspark.sql.functions as F
@@ -39,14 +40,14 @@ try:
     from utils.s3_path_utils import get_data_file_paths, get_output_paths
 except ImportError:
     # Define fallback functions if utils module is not available
-    def df(path, spark, schema=None):
+    def df(path: str, spark: SparkSession, schema=None) -> DataFrame:
         """Read a CSV file into a Spark DataFrame."""
         if schema:
             return spark.read.csv(path, header=True, schema=schema, inferSchema=False)
         else:
             return spark.read.csv(path, header=True, inferSchema=True)
 
-    def get_data_file_paths(bucket_name, raw_data_prefix):
+    def get_data_file_paths(bucket_name: str, raw_data_prefix: str) -> dict:
         """Get the paths to the data files in S3."""
         return {
             "rental_transactions": f"s3://{bucket_name}/{raw_data_prefix}rental_transactions/",
@@ -55,22 +56,79 @@ except ImportError:
             "users": f"s3://{bucket_name}/{raw_data_prefix}users/",
         }
 
-    def get_output_paths(bucket_name, processed_data_prefix):
-        """Get the paths to the output directories in S3."""
+    def get_output_paths(
+        s3_config: dict = None,
+        bucket_name: str = None,
+        processed_data_prefix: str = None,
+    ) -> dict:
+        """
+        Get the paths to the output directories in S3.
+
+        Args:
+            s3_config (dict, optional): S3 configuration dictionary. Defaults to None.
+            bucket_name (str, optional): Name of the S3 bucket. Defaults to None.
+            processed_data_prefix (str, optional): Prefix for processed data files. Defaults to None.
+
+        Returns:
+            dict: Dictionary containing paths for different output metrics
+        """
+        # Handle the case when called with bucket_name and processed_data_prefix directly
+        if (
+            bucket_name is not None
+            and processed_data_prefix is not None
+            and s3_config is None
+        ):
+            # This is the case when called from the main function
+            vehicle_location_base = (
+                f"s3://{bucket_name}/{processed_data_prefix}vehicle_location_metrics/"
+            )
+            user_transaction_base = (
+                f"s3://{bucket_name}/{processed_data_prefix}user_transaction_analysis/"
+            )
+        else:
+            # This is the case when called with s3_config (matching the utils.s3_path_utils signature)
+            if bucket_name is None and s3_config is not None:
+                bucket_name = s3_config.get("bucket_name")
+
+            if processed_data_prefix is None and s3_config is not None:
+                processed_data_prefix = s3_config.get(
+                    "processed_data_prefix", "processed/"
+                )
+            elif processed_data_prefix is None:
+                processed_data_prefix = "processed/"
+
+            # Ensure the processed_data_prefix ends with a slash
+            if not processed_data_prefix.endswith("/"):
+                processed_data_prefix += "/"
+
+            # Define the base paths
+            vehicle_location_base = (
+                f"s3://{bucket_name}/{processed_data_prefix}vehicle_location_metrics/"
+            )
+            user_transaction_base = (
+                f"s3://{bucket_name}/{processed_data_prefix}user_transaction_analysis/"
+            )
+
+        # Return the output paths dictionary
         return {
-            "daily_metrics": f"s3://{bucket_name}/{processed_data_prefix}daily_metrics/",
-            "user_metrics": f"s3://{bucket_name}/{processed_data_prefix}user_metrics/",
-            "hourly_metrics": f"s3://{bucket_name}/{processed_data_prefix}hourly_metrics/",
-            "day_of_week_metrics": f"s3://{bucket_name}/{processed_data_prefix}day_of_week_metrics/",
+            # Job 1 outputs (included for completeness)
+            "location_metrics": f"{vehicle_location_base}location_metrics/",
+            "vehicle_type_metrics": f"{vehicle_location_base}vehicle_type_metrics/",
+            "brand_metrics": f"{vehicle_location_base}brand_metrics/",
+            # Job 2 outputs
+            "daily_metrics": f"{user_transaction_base}daily_metrics/",
+            "user_metrics": f"{user_transaction_base}user_metrics/",
+            "hourly_metrics": f"{user_transaction_base}hourly_metrics/",
+            "day_of_week_metrics": f"{user_transaction_base}day_of_week_metrics/",
         }
 
 
 def create_spark_session() -> SparkSession:
     """
-    Create and return a Spark session.
+    Create and return a configured Spark session.
 
     Returns:
-        SparkSession: The created Spark session
+        SparkSession: Configured Spark session with snappy compression
     """
     return (
         SparkSession.builder.appName("User and Transaction Analysis")
@@ -79,7 +137,9 @@ def create_spark_session() -> SparkSession:
     )
 
 
-def load_data(spark: SparkSession, s3_bucket: str, raw_data_prefix: str) -> tuple:
+def load_data(
+    spark: SparkSession, s3_bucket: str, raw_data_prefix: str
+) -> Tuple[DataFrame, DataFrame]:
     """
     Load the raw data from S3.
 
@@ -89,7 +149,7 @@ def load_data(spark: SparkSession, s3_bucket: str, raw_data_prefix: str) -> tupl
         raw_data_prefix (str): The prefix for raw data in S3
 
     Returns:
-        tuple: (transactions_df, users_df)
+        Tuple[DataFrame, DataFrame]: (transactions_df, users_df)
     """
     # Get the data file paths using the utility function
     data_paths = get_data_file_paths(s3_bucket, raw_data_prefix)
@@ -206,7 +266,9 @@ def analyze_user_transactions(
     return user_metrics_categorized
 
 
-def analyze_transaction_patterns(transactions_df: DataFrame) -> tuple:
+def analyze_transaction_patterns(
+    transactions_df: DataFrame,
+) -> Tuple[DataFrame, DataFrame]:
     """
     Analyze transaction patterns.
 
@@ -275,7 +337,7 @@ def analyze_transaction_patterns(transactions_df: DataFrame) -> tuple:
     return hourly_metrics, day_of_week_metrics
 
 
-def main():
+def main() -> None:
     """Main function to execute the Spark job."""
     # Check if the required arguments are provided
     if len(sys.argv) != 3:
@@ -283,7 +345,7 @@ def main():
         sys.exit(1)
 
     s3_bucket = sys.argv[1]
-    environment = sys.argv[2]  # 'dev' or 'prod'
+    # environment = sys.argv[2]  # 'dev' or 'prod'
 
     # Set the data prefixes based on the environment
     raw_data_prefix = "raw/"
