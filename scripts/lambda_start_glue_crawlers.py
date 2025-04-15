@@ -20,15 +20,16 @@ Returns:
 - Dictionary containing execution status and results for each crawler
 """
 
-import boto3
-import logging
+import boto3  # Import boto3 module
 import time
-from typing import Dict, Any
-from mypy_boto3_glue import GlueClient
+from typing import Dict, Any  # Import Dict and Any type hints
 
-# Configure logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+from mypy_boto3_glue import GlueClient  # Import GlueClient type hints
+
+from utils.logging_config import configure_logger
+
+# Configure logger
+logger = configure_logger(__name__)
 
 
 def check_crawler_status(glue_client: GlueClient, crawler_name: str) -> bool:
