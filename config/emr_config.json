@@ -1,7 +1,7 @@
 {
   "Name": "Car-Rental-EMR-Cluster",
   "LogUri": "s3://emr-car-rental-data-lake/logs/",
-  "ReleaseLabel": "emr-6.10.0",
+  "ReleaseLabel": "emr-6.11.0",
   "Applications": [
     {
       "Name": "Spark"
@@ -22,14 +22,14 @@
         "Name": "Master Instance Group",
         "Market": "ON_DEMAND",
         "InstanceRole": "MASTER",
-        "InstanceType": "m5.xlarge",
+        "InstanceType": "m4.large",
         "InstanceCount": 1
       },
       {
         "Name": "Core Instance Group",
         "Market": "ON_DEMAND",
         "InstanceRole": "CORE",
-        "InstanceType": "m5.xlarge",
+        "InstanceType": "m4.large",
         "InstanceCount": 2
       }
     ],
@@ -49,8 +49,8 @@
       "Properties": {
         "spark.dynamicAllocation.enabled": "true",
         "spark.executor.instances": "2",
-        "spark.executor.memory": "4g",
-        "spark.driver.memory": "4g"
+        "spark.executor.memory": "2g",
+        "spark.driver.memory": "2g"
       }
     }
   ],
