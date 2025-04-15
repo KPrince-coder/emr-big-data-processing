@@ -1,6 +1,6 @@
 {
   "Name": "Car-Rental-EMR-Cluster",
-  "LogUri": "s3://car-rental-data-lake/logs/",
+  "LogUri": "s3://emr-car-rental-data-lake/logs/",
   "ReleaseLabel": "emr-6.10.0",
   "Applications": [
     {
