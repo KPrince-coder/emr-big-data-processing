@@ -41,11 +41,11 @@ logger = configure_logger(__name__)
 # Lambda function configuration
 LAMBDA_CONFIG = {
     "function_name": "StartGlueCrawlers",
-    "handler": "lambda_start_glue_crawlers.lambda_handler",
+    "handler": "lambda_start_glue_crawlers_standalone.lambda_handler",
     "runtime": "python3.9",
     "timeout": 900,  # 15 minutes
     "memory_size": 128,
-    "source_file": "scripts/lambda_start_glue_crawlers.py",
+    "source_file": "scripts/lambda_start_glue_crawlers_standalone.py",
 }
 
 
@@ -64,9 +64,10 @@ def create_lambda_deployment_package(source_file: str) -> bytes:
         # Create the deployment package
         with zipfile.ZipFile(temp_file, "w") as zip_file:
             # Add the Lambda function source file
+            lambda_file_name = os.path.basename(source_file)
             zip_file.write(
                 source_file,
-                arcname=os.path.basename(source_file).replace(".py", ".py"),
+                arcname=lambda_file_name,
             )
 
         temp_file_path = temp_file.name

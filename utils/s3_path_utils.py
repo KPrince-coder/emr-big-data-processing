@@ -18,6 +18,8 @@ Example:
 
 from typing import Dict
 
+from config.aws_config import S3_CONFIG
+
 
 def normalize_s3_path(path: str) -> str:
     """
@@ -113,10 +115,7 @@ def get_s3_bucket_and_key(s3_uri: str) -> tuple:
 
 
 def get_raw_data_path(
-    dataset_name: str,
-    s3_config: dict,
-    bucket_name: str = None,
-    file_extension: str = "",
+    dataset_name: str, bucket_name: str = None, file_extension: str = ""
 ) -> str:
     """
     Get the S3 path for raw data using the folder structure from the config.
@@ -137,14 +136,14 @@ def get_raw_data_path(
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Get the folder path from config if available
-    folder_path = s3_config["folders"].get(dataset_name, None)
+    folder_path = S3_CONFIG["folders"].get(dataset_name, None)
 
     if folder_path is None:
         # Fall back to default path construction if dataset not in config
-        folder_path = f"{s3_config['raw_data_prefix']}{dataset_name}/"
+        folder_path = f"{S3_CONFIG['raw_data_prefix']}{dataset_name}/"
 
     if file_extension:
         if not file_extension.startswith("."):
@@ -157,9 +156,7 @@ def get_raw_data_path(
         return normalize_s3_path(f"s3://{bucket_name}/{folder_path}")
 
 
-def get_processed_data_path(
-    dataset_name: str, s3_config: dict, bucket_name: str = None
-) -> str:
+def get_processed_data_path(dataset_name: str, bucket_name: str = None) -> str:
     """
     Get the S3 path for processed data using the folder structure from the config.
 
@@ -178,23 +175,21 @@ def get_processed_data_path(
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Check if the dataset is one of our known processed datasets
     if dataset_name in ["vehicle_location_metrics", "user_transaction_analysis"]:
-        folder_path = s3_config["folders"].get(dataset_name, None)
+        folder_path = S3_CONFIG["folders"].get(dataset_name, None)
         if folder_path is not None:
             return normalize_s3_path(f"s3://{bucket_name}/{folder_path}")
 
     # Fall back to default path construction
     return normalize_s3_path(
-        f"s3://{bucket_name}/{s3_config['processed_data_prefix']}{dataset_name}"
+        f"s3://{bucket_name}/{S3_CONFIG['processed_data_prefix']}{dataset_name}"
     )
 
 
-def get_temp_data_path(
-    dataset_name: str, s3_config: dict, bucket_name: str = None
-) -> str:
+def get_temp_data_path(dataset_name: str, bucket_name: str = None) -> str:
     """
     Get the S3 path for temporary data using the folder structure from the config.
 
@@ -213,21 +208,21 @@ def get_temp_data_path(
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Check if the dataset is 'athena_results'
     if dataset_name == "athena_results":
-        folder_path = s3_config["folders"].get("athena_results", None)
+        folder_path = S3_CONFIG["folders"].get("athena_results", None)
         if folder_path is not None:
             return normalize_s3_path(f"s3://{bucket_name}/{folder_path}")
 
     # Fall back to default path construction
     return normalize_s3_path(
-        f"s3://{bucket_name}/{s3_config['temp_data_prefix']}{dataset_name}"
+        f"s3://{bucket_name}/{S3_CONFIG['temp_data_prefix']}{dataset_name}"
     )
 
 
-def get_scripts_path(script_name: str, s3_config: dict, bucket_name: str = None) -> str:
+def get_scripts_path(script_name: str, bucket_name: str = None) -> str:
     """
     Get the S3 path for scripts using the folder structure from the config.
 
@@ -246,10 +241,10 @@ def get_scripts_path(script_name: str, s3_config: dict, bucket_name: str = None)
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Get scripts folder from config
-    scripts_folder = s3_config["folders"].get("scripts", s3_config["scripts_prefix"])
+    scripts_folder = S3_CONFIG["folders"].get("scripts", S3_CONFIG["scripts_prefix"])
 
     # Ensure the folder path ends with a slash
     if not scripts_folder.endswith("/"):
@@ -258,7 +253,7 @@ def get_scripts_path(script_name: str, s3_config: dict, bucket_name: str = None)
     return f"s3://{bucket_name}/{scripts_folder}{script_name}"
 
 
-def get_logs_path(log_name: str, s3_config: dict, bucket_name: str = None) -> str:
+def get_logs_path(log_name: str, bucket_name: str = None) -> str:
     """
     Get the S3 path for logs using the folder structure from the config.
 
@@ -277,18 +272,18 @@ def get_logs_path(log_name: str, s3_config: dict, bucket_name: str = None) -> st
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Check if log_name is 'emr' and we have a logs folder in config
-    if log_name == "emr" and "logs" in s3_config["folders"]:
-        return normalize_s3_path(f"s3://{bucket_name}/{s3_config['folders']['logs']}")
+    if log_name == "emr" and "logs" in S3_CONFIG["folders"]:
+        return normalize_s3_path(f"s3://{bucket_name}/{S3_CONFIG['folders']['logs']}")
 
     # Fall back to default path construction
     return normalize_s3_path(f"s3://{bucket_name}/logs/{log_name}")
 
 
 def get_data_file_paths(
-    s3_config: dict, bucket_name: str = None, raw_data_prefix: str = None
+    bucket_name: str = None, raw_data_prefix: str = None
 ) -> Dict[str, str]:
     """
     Get the S3 paths for all data files using the folder structure from the config.
@@ -310,11 +305,11 @@ def get_data_file_paths(
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Use raw_data_prefix from config if not provided
     if raw_data_prefix is None:
-        raw_data_prefix = s3_config["raw_data_prefix"]
+        raw_data_prefix = S3_CONFIG["raw_data_prefix"]
 
     # Ensure the raw_data_prefix ends with a slash
     raw_data_prefix = normalize_s3_path(raw_data_prefix)
@@ -325,7 +320,7 @@ def get_data_file_paths(
     # Add paths for raw data files
     for dataset in ["users", "vehicles", "locations", "rental_transactions"]:
         # Get folder path from config if available
-        folder_path = s3_config["folders"].get(dataset, f"{raw_data_prefix}{dataset}/")
+        folder_path = S3_CONFIG["folders"].get(dataset, f"{raw_data_prefix}{dataset}/")
 
         # Remove trailing slash for files
         if folder_path.endswith("/"):
@@ -337,7 +332,7 @@ def get_data_file_paths(
 
 
 def get_output_paths(
-    s3_config: dict, bucket_name: str = None, processed_data_prefix: str = None
+    bucket_name: str = None, processed_data_prefix: str = None
 ) -> Dict[str, str]:
     """
     Get the S3 paths for output data using the folder structure from the config.
@@ -359,22 +354,22 @@ def get_output_paths(
     """
     # Use bucket from config if not provided
     if bucket_name is None:
-        bucket_name = s3_config["bucket_name"]
+        bucket_name = S3_CONFIG["bucket_name"]
 
     # Use processed_data_prefix from config if not provided
     if processed_data_prefix is None:
-        processed_data_prefix = s3_config["processed_data_prefix"]
+        processed_data_prefix = S3_CONFIG["processed_data_prefix"]
 
     # Ensure the processed_data_prefix ends with a slash
     processed_data_prefix = normalize_s3_path(processed_data_prefix)
 
     # Get the base paths for each job from config if available
     vehicle_location_base = normalize_s3_path(
-        f"s3://{bucket_name}/{s3_config['folders'].get('vehicle_location_metrics', f'{processed_data_prefix}vehicle_location_metrics/')}"
+        f"s3://{bucket_name}/{S3_CONFIG['folders'].get('vehicle_location_metrics', f'{processed_data_prefix}vehicle_location_metrics/')}"
     )
 
     user_transaction_base = normalize_s3_path(
-        f"s3://{bucket_name}/{s3_config['folders'].get('user_transaction_analysis', f'{processed_data_prefix}user_transaction_analysis/')}"
+        f"s3://{bucket_name}/{S3_CONFIG['folders'].get('user_transaction_analysis', f'{processed_data_prefix}user_transaction_analysis/')}"
     )
 
     # Define the output paths

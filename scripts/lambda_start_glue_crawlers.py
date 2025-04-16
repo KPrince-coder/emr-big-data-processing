@@ -23,10 +23,11 @@ Returns:
 import boto3  # Import boto3 module
 import time
 from typing import Dict, Any  # Import Dict and Any type hints
-
-from mypy_boto3_glue import GlueClient  # Import GlueClient type hints
-
 from utils.logging_config import configure_logger
+
+# Remove dependency on mypy_boto3_glue
+# Instead of using GlueClient type hint, use Any
+GlueClient = Any  # Type alias for GlueClient
 
 # Configure logger
 logger = configure_logger(__name__)
