@@ -13,6 +13,7 @@ Output: Transformed data in Parquet format in S3
 """
 
 import sys
+import traceback
 from typing import Tuple
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import (
@@ -34,6 +35,20 @@ from pyspark.sql.functions import (
 from pyspark.sql.window import Window
 import pyspark.sql.functions as F
 
+# Set up logging
+try:
+    from utils.logging_config import configure_logger
+
+    logger = configure_logger(__name__)
+except ImportError:
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
+
 # Try to import utility functions for S3 path handling
 try:
     from utils.read_csv_file import df
@@ -50,10 +65,10 @@ except ImportError:
     def get_data_file_paths(bucket_name: str, raw_data_prefix: str) -> dict:
         """Get the paths to the data files in S3."""
         return {
-            "rental_transactions": f"s3://{bucket_name}/{raw_data_prefix}rental_transactions/",
-            "vehicles": f"s3://{bucket_name}/{raw_data_prefix}vehicles/",
-            "locations": f"s3://{bucket_name}/{raw_data_prefix}locations/",
-            "users": f"s3://{bucket_name}/{raw_data_prefix}users/",
+            "rental_transactions": f"s3://{bucket_name}/{raw_data_prefix}rental_transactions/rental_transactions.csv",
+            "vehicles": f"s3://{bucket_name}/{raw_data_prefix}vehicles/vehicles.csv",
+            "locations": f"s3://{bucket_name}/{raw_data_prefix}locations/locations.csv",
+            "users": f"s3://{bucket_name}/{raw_data_prefix}users/users.csv",
         }
 
     def get_output_paths(
@@ -341,51 +356,101 @@ def main() -> None:
     """Main function to execute the Spark job."""
     # Check if the required arguments are provided
     if len(sys.argv) != 3:
-        print("Usage: job2_user_transaction_analysis.py <s3_bucket> <environment>")
+        logger.error(
+            "Usage: job2_user_transaction_analysis.py <s3_bucket> <environment>"
+        )
         sys.exit(1)
 
     s3_bucket = sys.argv[1]
-    # environment = sys.argv[2]  # 'dev' or 'prod'
+    environment = sys.argv[2]  # 'dev' or 'prod'
+    logger.info(
+        f"Starting User Transaction Analysis job with bucket: {s3_bucket}, environment: {environment}"
+    )
 
     # Set the data prefixes based on the environment
-    raw_data_prefix = "raw/"
-    processed_data_prefix = "processed/"
+    if environment.lower() == "dev":
+        raw_data_prefix = "dev/raw/"
+        processed_data_prefix = "dev/processed/"
+    else:  # 'prod' or any other value defaults to production
+        raw_data_prefix = "raw/"
+        processed_data_prefix = "processed/"
+
+    logger.info(
+        f"Using raw_data_prefix: {raw_data_prefix}, processed_data_prefix: {processed_data_prefix}"
+    )
 
     # Create Spark session
+    logger.info("Creating Spark session")
     spark = create_spark_session()
+    logger.info(f"Spark session created: {spark.sparkContext.appName}")
 
     try:
         # Load data
+        logger.info("Loading data from S3")
         transactions_df, users_df = load_data(spark, s3_bucket, raw_data_prefix)
+        logger.info(
+            f"Data loaded successfully. Transactions count: {transactions_df.count()}, Users count: {users_df.count()}"
+        )
 
         # Analyze daily transactions
+        logger.info("Analyzing daily transactions")
         daily_metrics = analyze_daily_transactions(transactions_df)
+        logger.info(
+            f"Daily metrics analysis complete. Row count: {daily_metrics.count()}"
+        )
 
         # Analyze user transactions
+        logger.info("Analyzing user transactions")
         user_metrics = analyze_user_transactions(transactions_df, users_df)
+        logger.info(
+            f"User metrics analysis complete. Row count: {user_metrics.count()}"
+        )
 
         # Analyze transaction patterns
+        logger.info("Analyzing transaction patterns")
         hourly_metrics, day_of_week_metrics = analyze_transaction_patterns(
             transactions_df
         )
+        logger.info(
+            f"Transaction patterns analysis complete. Hourly metrics count: {hourly_metrics.count()}, Day of week metrics count: {day_of_week_metrics.count()}"
+        )
 
         # Get output paths using the utility function
-        output_paths = get_output_paths(s3_bucket, processed_data_prefix)
+        logger.info("Getting output paths")
+        output_paths = get_output_paths(
+            bucket_name=s3_bucket, processed_data_prefix=processed_data_prefix
+        )
+        logger.info(f"Output paths: {output_paths}")
 
         # Write the results to S3 in Parquet format
+        logger.info(f"Writing daily metrics to {output_paths['daily_metrics']}")
         daily_metrics.write.mode("overwrite").parquet(output_paths["daily_metrics"])
+        logger.info("Daily metrics written successfully")
+
+        logger.info(f"Writing user metrics to {output_paths['user_metrics']}")
         user_metrics.write.mode("overwrite").parquet(output_paths["user_metrics"])
+        logger.info("User metrics written successfully")
+
+        logger.info(f"Writing hourly metrics to {output_paths['hourly_metrics']}")
         hourly_metrics.write.mode("overwrite").parquet(output_paths["hourly_metrics"])
+        logger.info("Hourly metrics written successfully")
+
+        logger.info(
+            f"Writing day of week metrics to {output_paths['day_of_week_metrics']}"
+        )
         day_of_week_metrics.write.mode("overwrite").parquet(
             output_paths["day_of_week_metrics"]
         )
+        logger.info("Day of week metrics written successfully")
 
-        print("User and transaction analysis job completed successfully")
+        logger.info("User and transaction analysis job completed successfully")
 
     except Exception as e:
-        print(f"Error in user and transaction analysis job: {e}")
+        logger.error(f"Error in user and transaction analysis job: {str(e)}")
+        logger.error(traceback.format_exc())
         sys.exit(1)
     finally:
+        logger.info("Stopping Spark session")
         spark.stop()
 
 
